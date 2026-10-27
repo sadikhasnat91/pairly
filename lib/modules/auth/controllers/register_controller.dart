@@ -67,7 +67,12 @@ class RegisterController extends GetxController {
       Get.offAllNamed(AppRoutes.profileSetup);
     } catch (e) {
       final errStr = e.toString();
-      if (errStr.contains('email_address_invalid') ||
+      if (errStr.contains('Failed host lookup') ||
+          errStr.contains('SocketException') ||
+          errStr.contains('errno = 7')) {
+        errorMessage.value =
+            'No Internet Connection. Please check your mobile data/Wi-Fi or turn off any active VPN.';
+      } else if (errStr.contains('email_address_invalid') ||
           errStr.contains('rate_limit') ||
           errStr.contains('over_email_send_rate_limit')) {
         errorMessage.value =

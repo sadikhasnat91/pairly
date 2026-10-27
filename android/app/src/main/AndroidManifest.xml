@@ -11,7 +11,8 @@
     <application
         android:label="Pairly"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
 
         <!-- Google Maps API Key Meta-data -->
         <!-- Replace YOUR_GOOGLE_MAPS_API_KEY with your Google Cloud Console Maps SDK key -->

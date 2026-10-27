@@ -81,7 +81,7 @@ class LiveMapView extends GetView<LiveMapController> {
         onMapCreated: controller.onMapCreated,
         markers: controller.markers,
         circles: controller.circles,
-        myLocationEnabled: false, // Custom themed marker
+        myLocationEnabled: true,
         myLocationButtonEnabled: false,
         zoomControlsEnabled: false,
         compassEnabled: true,

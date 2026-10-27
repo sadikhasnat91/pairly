@@ -47,6 +47,27 @@ class LiveMapController extends GetxController {
   void onInit() {
     super.onInit();
     _initData();
+    fetchCurrentLocation();
+  }
+
+  Future<void> fetchCurrentLocation() async {
+    try {
+      final pos = await _locationService.getCurrentPosition();
+      final uid = _authRepo.currentUser?.id;
+      if (pos != null && uid != null) {
+        await _locationRepo.updateCurrentLocation(
+          uid: uid,
+          position: pos,
+          isSharing: true,
+        );
+        final latLng = LatLng(pos.latitude, pos.longitude);
+        mapController?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(target: latLng, zoom: AppConstants.defaultZoom),
+          ),
+        );
+      }
+    } catch (_) {}
   }
 
   void _initData() {
@@ -82,6 +103,7 @@ class LiveMapController extends GetxController {
     mapController = controller;
     isMapLoading.value = false;
     _updateMapEntities();
+    fetchCurrentLocation();
     fitBothMarkers();
   }
 

@@ -38,30 +38,25 @@ class SplashView extends GetView<SplashController> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Animated brand icon
+                // Brand logo
                 Container(
-                  width: 96,
-                  height: 96,
+                  width: 110,
+                  height: 110,
                   decoration: BoxDecoration(
-                    color: AppColors.elevatedCard,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primaryAccent.withValues(alpha: 0.4),
-                      width: 2,
-                    ),
+                    borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryAccent.withValues(alpha: 0.2),
-                        blurRadius: 24,
-                        spreadRadius: 4,
+                        color: AppColors.primaryAccent.withValues(alpha: 0.3),
+                        blurRadius: 30,
+                        spreadRadius: 2,
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.favorite_rounded,
-                      color: AppColors.primaryAccent,
-                      size: 46,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),

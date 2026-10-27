@@ -43,11 +43,22 @@ class AuthController extends GetxController {
       await _authRepository.signIn(email: email, password: password);
       Get.offAllNamed(AppRoutes.mainLayout);
     } catch (e) {
-      errorMessage.value = e.toString().replaceAll('Exception:', '').trim();
+      final errStr = e.toString();
+      if (errStr.contains('Failed host lookup') ||
+          errStr.contains('SocketException') ||
+          errStr.contains('errno = 7')) {
+        errorMessage.value =
+            'No Internet Connection. Please check your mobile data/Wi-Fi or turn off any active VPN.';
+      } else if (errStr.contains('Invalid login credentials')) {
+        errorMessage.value = 'Incorrect email or password. Please check and try again.';
+      } else {
+        errorMessage.value = errStr.replaceAll('Exception:', '').replaceAll('AuthApiException:', '').trim();
+      }
       Get.snackbar(
         'Sign In Failed',
         errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 5),
       );
     } finally {
       isLoading.value = false;

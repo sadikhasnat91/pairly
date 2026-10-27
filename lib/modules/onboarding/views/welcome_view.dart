@@ -25,19 +25,17 @@ class WelcomeView extends GetView<WelcomeController> {
               Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryAccent.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primaryAccent.withValues(alpha: 0.3),
-                      ),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
-                      Icons.favorite_rounded,
-                      color: AppColors.primaryAccent,
-                      size: 20,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
