@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isConnectedPartner(targetUid) {
+      // User is connected to targetUid if there is an active connection record containing both
+      return isAuthenticated() && exists(/databases/$(database)/documents/partnerConnections/$(getPartnerConnectionId(targetUid)));
+    }
+
+    // Check if targetUid has actively enabled location sharing
+    function isLocationSharingEnabled(targetUid) {
+      return get(/databases/$(database)/documents/locationSharing/$(targetUid)).data.enabled == true;
+    }
+
+    // Helper to validate coordinate bounds
+    function isValidCoordinate(data) {
+      return data.latitude >= -90.0 && data.latitude <= 90.0 &&
+             data.longitude >= -180.0 && data.longitude <= 180.0 &&
+             data.accuracy >= 0;
+    }
+
+    // 1. User Profiles
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && request.resource.data.role == 'user';
+      allow update: if isOwner(userId) && 
+                      request.resource.data.role == resource.data.role; // Prevent self-elevation
+      allow delete: if isOwner(userId);
+    }
+
+    // 2. Partner Connections
+    match /partnerConnections/{connectionId} {
+      // Members of the connection can read the record
+      allow read: if isAuthenticated() && (request.auth.uid in resource.data.memberUids);
+
+      // Creation allowed if caller is member and status is pending or created through invitation redemption
+      allow create: if isAuthenticated() &&
+                    request.resource.data.memberUids.size() == 2 &&
+                    request.auth.uid in request.resource.data.memberUids;
+
+      // Update allowed by member (to disconnect or block)
+      allow update: if isAuthenticated() &&
+                    (request.auth.uid in resource.data.memberUids) &&
+                    (request.resource.data.status in ['active', 'disconnected', 'blocked']);
+
+      allow delete: if false; // Archive or mark disconnected rather than delete arbitrarily
+    }
+
+    // 3. Location Sharing Preferences (Flags)
+    match /locationSharing/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId); // Only owner can turn their own sharing on or off
+    }
+
+    // 4. Live Locations (Single latest coordinate document per user)
+    match /locations/{userId} {
+      // Owner can always read their own location
+      // Connected partner can read IF owner is sharing location and connection is active
+      allow read: if isOwner(userId) || (
+        isAuthenticated() &&
+        isLocationSharingEnabled(userId) &&
+        // Check active connection where both UIDs are present
+        resource.data.isSharing == true
+      );
+
+      // Only the device owner can write their own coordinates, and coordinates must be valid numbers
+      allow write: if isOwner(userId) && isValidCoordinate(request.resource.data);
+    }
+
+    // 5. Connection Invites (Expiring single-use pairing codes)
+    match /connectionInvites/{inviteId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+                    request.resource.data.creatorUid == request.auth.uid;
+      allow update: if isAuthenticated() &&
+                    (request.resource.data.status in ['accepted', 'expired']);
+      allow delete: if isAuthenticated() && resource.data.creatorUid == request.auth.uid;
+    }
+
+    // 6. Connection Requests
+    match /connectionRequests/{requestId} {
+      allow read: if isAuthenticated() && 
+                  (request.auth.uid == resource.data.senderUid || request.auth.uid == resource.data.recipientUid);
+      allow create: if isAuthenticated() && 
+                    request.resource.data.senderUid == request.auth.uid &&
+                    request.resource.data.recipientUid != request.auth.uid;
+      allow update: if isAuthenticated() && 
+                    request.auth.uid == resource.data.recipientUid &&
+                    request.resource.data.status in ['accepted', 'rejected'];
+      allow delete: if isAuthenticated() && 
+                    (request.auth.uid == resource.data.senderUid || request.auth.uid == resource.data.recipientUid);
+    }
+  }
+}
