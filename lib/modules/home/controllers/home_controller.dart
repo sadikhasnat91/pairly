@@ -1,7 +1,5 @@
 import 'dart:async';
-
 import 'package:get/get.dart';
-
 import '../../../app/routes/app_routes.dart';
 import '../../../data/models/location_data_model.dart';
 import '../../../data/models/partner_connection_model.dart';
@@ -44,6 +42,22 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     _bindStreams();
+    _fetchInitialPosition();
+  }
+
+  /// Automatically fetch initial device GPS location on launch so map has real coordinates
+  Future<void> _fetchInitialPosition() async {
+    final uid = _authRepo.currentUser?.id;
+    if (uid == null) return;
+
+    final pos = await _locationService.getCurrentPosition();
+    if (pos != null) {
+      await _locationRepo.updateCurrentLocation(
+        uid: uid,
+        position: pos,
+        isSharing: isSharing.value,
+      );
+    }
   }
 
   void _bindStreams() {

@@ -1,8 +1,6 @@
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-
 import '../../core/constants/app_constants.dart';
 
 enum LocationServiceState {
@@ -24,32 +22,38 @@ class LocationService {
   bool _isTracking = false;
   bool get isTracking => _isTracking;
 
-  /// Verifies location service and Android permissions
+  /// Verifies location service and Android/Web permissions
   Future<LocationServiceState> checkServiceAndPermission() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return LocationServiceState.disabled;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return LocationServiceState.permissionDenied;
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return LocationServiceState.disabled;
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
-      return LocationServiceState.permissionDeniedForever;
-    }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return LocationServiceState.permissionDenied;
+        }
+      }
 
-    return LocationServiceState.ready;
+      if (permission == LocationPermission.deniedForever) {
+        return LocationServiceState.permissionDeniedForever;
+      }
+
+      return LocationServiceState.ready;
+    } catch (e) {
+      debugPrint('Permission check error: $e');
+      return LocationServiceState.ready;
+    }
   }
 
   /// Requests current one-shot device position
   Future<Position?> getCurrentPosition() async {
     final state = await checkServiceAndPermission();
-    if (state != LocationServiceState.ready) {
+    if (state == LocationServiceState.disabled ||
+        state == LocationServiceState.permissionDeniedForever) {
       return null;
     }
 
@@ -57,13 +61,20 @@ class LocationService {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
+          timeLimit: Duration(seconds: 12),
         ),
       );
       _lastKnownPosition = position;
       return position;
     } catch (e) {
-      debugPrint('Error getting current position: $e');
+      debugPrint('Error getting high accuracy position: $e');
+      try {
+        final last = await Geolocator.getLastKnownPosition();
+        if (last != null) {
+          _lastKnownPosition = last;
+          return last;
+        }
+      } catch (_) {}
       return null;
     }
   }
@@ -73,35 +84,44 @@ class LocationService {
     required Function(Position position) onUpdate,
     Function(dynamic error)? onError,
   }) async {
+    await stopTracking();
+
     final state = await checkServiceAndPermission();
-    if (state != LocationServiceState.ready) {
+    if (state == LocationServiceState.disabled ||
+        state == LocationServiceState.permissionDeniedForever) {
       return false;
     }
 
-    await stopTracking();
-
-    final locationSettings = AndroidSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: AppConstants.locationDistanceFilterMeters,
-      intervalDuration: AppConstants.locationThrottleInterval,
-      foregroundNotificationConfig:
-          null, // Keep foreground-only unless background configured
-    );
+    // Platform-aware settings
+    LocationSettings locationSettings;
+    if (kIsWeb) {
+      locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      );
+    } else {
+      locationSettings = AndroidSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: AppConstants.locationDistanceFilterMeters,
+        intervalDuration: AppConstants.locationThrottleInterval,
+        foregroundNotificationConfig: null,
+      );
+    }
 
     try {
-      _positionSubscription =
-          Geolocator.getPositionStream(locationSettings: locationSettings)
-              .listen(
-                (Position position) {
-                  _lastKnownPosition = position;
-                  _positionStreamController.add(position);
-                  onUpdate(position);
-                },
-                onError: (err) {
-                  debugPrint('Geolocator stream error: $err');
-                  if (onError != null) onError(err);
-                },
-              );
+      _positionSubscription = Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      ).listen(
+        (Position position) {
+          _lastKnownPosition = position;
+          _positionStreamController.add(position);
+          onUpdate(position);
+        },
+        onError: (err) {
+          debugPrint('Geolocator stream error: $err');
+          if (onError != null) onError(err);
+        },
+      );
       _isTracking = true;
       return true;
     } catch (e) {
