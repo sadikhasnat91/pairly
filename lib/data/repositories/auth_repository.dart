@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/user_model.dart';
-import '../services/firebase_service.dart';
 import '../services/storage_service.dart';
+import '../services/supabase_service.dart';
 
 class AuthRepository {
-  final FirebaseService firebaseService;
+  final SupabaseService supabaseService;
   final StorageService storageService;
   final _authStateController = StreamController<UserModel?>.broadcast();
 
@@ -15,8 +14,10 @@ class AuthRepository {
   UserModel? get currentUser => _currentUser;
   Stream<UserModel?> get authStateChanges => _authStateController.stream;
 
+  StreamSubscription? _authSubscription;
+
   AuthRepository({
-    required this.firebaseService,
+    required this.supabaseService,
     required this.storageService,
   }) {
     _init();
@@ -24,16 +25,21 @@ class AuthRepository {
 
   void _init() {
     _currentUser = storageService.getCachedUser();
-    if (firebaseService.isConfigured && firebaseService.auth != null) {
-      firebaseService.auth!.authStateChanges().listen((User? user) async {
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      _authSubscription =
+          supabaseService.client!.auth.onAuthStateChange.listen((data) async {
+        final session = data.session;
+        final user = session?.user;
         if (user != null) {
-          final profile = await _fetchUserProfile(user.uid);
+          final profile = await _fetchUserProfile(user.id);
           _currentUser = profile ??
               UserModel(
-                id: user.uid,
+                id: user.id,
                 email: user.email ?? '',
-                displayName: user.displayName ?? 'User',
-                photoUrl: user.photoURL,
+                displayName: (user.userMetadata?['displayName'] as String?) ??
+                    (user.userMetadata?['display_name'] as String?) ??
+                    user.email?.split('@').first ??
+                    'User',
                 createdAt: DateTime.now(),
               );
           await storageService.setCachedUser(_currentUser);
@@ -51,12 +57,17 @@ class AuthRepository {
 
   Future<UserModel?> _fetchUserProfile(String uid) async {
     try {
-      if (!firebaseService.isConfigured || firebaseService.firestore == null) {
+      if (!supabaseService.isConfigured || supabaseService.client == null) {
         return _currentUser;
       }
-      final doc = await firebaseService.firestore!.collection('users').doc(uid).get();
-      if (doc.exists && doc.data() != null) {
-        return UserModel.fromJson(doc.data()!);
+      final response = await supabaseService.client!
+          .from('users')
+          .select()
+          .eq('id', uid)
+          .maybeSingle();
+
+      if (response != null) {
+        return UserModel.fromJson(Map<String, dynamic>.from(response));
       }
     } catch (_) {}
     return null;
@@ -67,13 +78,15 @@ class AuthRepository {
     required String password,
     required String displayName,
   }) async {
-    if (firebaseService.isConfigured && firebaseService.auth != null) {
-      final credential = await firebaseService.auth!.createUserWithEmailAndPassword(
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      final res = await supabaseService.client!.auth.signUp(
         email: email.trim(),
         password: password,
+        data: {'displayName': displayName.trim()},
       );
-      final uid = credential.user!.uid;
-      await credential.user!.updateDisplayName(displayName.trim());
+
+      final user = res.user;
+      final uid = user?.id ?? const Uuid().v4();
 
       final newUser = UserModel(
         id: uid,
@@ -82,13 +95,16 @@ class AuthRepository {
         createdAt: DateTime.now(),
       );
 
-      await firebaseService.firestore!.collection('users').doc(uid).set(newUser.toJson());
+      try {
+        await supabaseService.client!.from('users').upsert(newUser.toJson());
+      } catch (_) {}
+
       _currentUser = newUser;
       await storageService.setCachedUser(newUser);
       _authStateController.add(newUser);
       return newUser;
     } else {
-      // Offline / Demo mode
+      // Offline / Local fallback mode
       final uid = const Uuid().v4();
       final newUser = UserModel(
         id: uid,
@@ -107,28 +123,34 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
-    if (firebaseService.isConfigured && firebaseService.auth != null) {
-      final credential = await firebaseService.auth!.signInWithEmailAndPassword(
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      final res = await supabaseService.client!.auth.signInWithPassword(
         email: email.trim(),
         password: password,
       );
-      final uid = credential.user!.uid;
+
+      final user = res.user;
+      final uid = user?.id ?? '';
       final profile = await _fetchUserProfile(uid);
-      final user = profile ??
+
+      final resolvedUser = profile ??
           UserModel(
             id: uid,
-            email: credential.user!.email ?? email,
-            displayName: credential.user!.displayName ?? 'User',
+            email: user?.email ?? email.trim(),
+            displayName: (user?.userMetadata?['displayName'] as String?) ??
+                email.split('@').first,
             createdAt: DateTime.now(),
           );
-      _currentUser = user;
-      await storageService.setCachedUser(user);
-      _authStateController.add(user);
-      return user;
+
+      _currentUser = resolvedUser;
+      await storageService.setCachedUser(resolvedUser);
+      _authStateController.add(resolvedUser);
+      return resolvedUser;
     } else {
       // Local fallback sign in
       final cached = storageService.getCachedUser();
-      if (cached != null && cached.email.toLowerCase() == email.trim().toLowerCase()) {
+      if (cached != null &&
+          cached.email.toLowerCase() == email.trim().toLowerCase()) {
         _currentUser = cached;
       } else {
         _currentUser = UserModel(
@@ -145,8 +167,8 @@ class AuthRepository {
   }
 
   Future<void> sendPasswordReset(String email) async {
-    if (firebaseService.isConfigured && firebaseService.auth != null) {
-      await firebaseService.auth!.sendPasswordResetEmail(email: email.trim());
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      await supabaseService.client!.auth.resetPasswordForEmail(email.trim());
     }
   }
 
@@ -166,23 +188,25 @@ class AuthRepository {
     _currentUser = updated;
     await storageService.setCachedUser(updated);
 
-    if (firebaseService.isConfigured && firebaseService.firestore != null) {
-      await firebaseService.firestore!
-          .collection('users')
-          .doc(updated.id)
-          .set(updated.toJson(), SetOptions(merge: true));
-
-      if (displayName != null) {
-        await firebaseService.auth?.currentUser?.updateDisplayName(displayName);
-      }
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      try {
+        await supabaseService.client!.from('users').upsert(updated.toJson());
+        if (displayName != null) {
+          await supabaseService.client!.auth.updateUser(
+            UserAttributes(data: {'displayName': displayName}),
+          );
+        }
+      } catch (_) {}
     }
 
     _authStateController.add(_currentUser);
   }
 
   Future<void> signOut() async {
-    if (firebaseService.isConfigured && firebaseService.auth != null) {
-      await firebaseService.auth!.signOut();
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      try {
+        await supabaseService.client!.auth.signOut();
+      } catch (_) {}
     }
     _currentUser = null;
     await storageService.setCachedUser(null);
@@ -192,19 +216,17 @@ class AuthRepository {
 
   Future<void> deleteAccount() async {
     final uid = _currentUser?.id;
-    if (uid != null && firebaseService.isConfigured) {
+    if (uid != null && supabaseService.isConfigured) {
       try {
-        await firebaseService.firestore?.collection('users').doc(uid).delete();
-        await firebaseService.firestore?.collection('locations').doc(uid).delete();
-        await firebaseService.firestore?.collection('locationSharing').doc(uid).delete();
-        await firebaseService.auth?.currentUser?.delete();
+        await supabaseService.client!.from('users').delete().eq('id', uid);
+        await supabaseService.client!.from('locations').delete().eq('uid', uid);
       } catch (_) {}
     }
     await signOut();
   }
 
   void dispose() {
+    _authSubscription?.cancel();
     _authStateController.close();
   }
 }
-

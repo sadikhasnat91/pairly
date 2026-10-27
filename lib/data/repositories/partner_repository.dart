@@ -1,24 +1,27 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import '../models/connection_request_model.dart';
 import '../models/invite_model.dart';
 import '../models/partner_connection_model.dart';
 import '../models/user_model.dart';
-import '../services/firebase_service.dart';
 import '../services/storage_service.dart';
+import '../services/supabase_service.dart';
 import '../../core/constants/app_constants.dart';
 
 class PartnerRepository {
-  final FirebaseService firebaseService;
+  final SupabaseService supabaseService;
   final StorageService storageService;
 
-  final _connectionController = StreamController<PartnerConnectionModel?>.broadcast();
-  Stream<PartnerConnectionModel?> get connectionStream => _connectionController.stream;
+  final _connectionController =
+      StreamController<PartnerConnectionModel?>.broadcast();
+  Stream<PartnerConnectionModel?> get connectionStream =>
+      _connectionController.stream;
 
-  final _pendingRequestsController = StreamController<List<ConnectionRequestModel>>.broadcast();
-  Stream<List<ConnectionRequestModel>> get pendingRequestsStream => _pendingRequestsController.stream;
+  final _pendingRequestsController =
+      StreamController<List<ConnectionRequestModel>>.broadcast();
+  Stream<List<ConnectionRequestModel>> get pendingRequestsStream =>
+      _pendingRequestsController.stream;
 
   PartnerConnectionModel? _currentConnection;
   PartnerConnectionModel? get currentConnection => _currentConnection;
@@ -27,82 +30,110 @@ class PartnerRepository {
   UserModel? get partnerUser => _partnerUser;
 
   StreamSubscription? _connectionSubscription;
-  StreamSubscription? _requestsSubscription;
 
   PartnerRepository({
-    required this.firebaseService,
+    required this.supabaseService,
     required this.storageService,
   });
 
   void listenToPartnerConnection(String currentUid) {
     _connectionSubscription?.cancel();
-    _requestsSubscription?.cancel();
 
-    if (firebaseService.isConfigured && firebaseService.firestore != null) {
-      // Query active connection containing currentUid
-      _connectionSubscription = firebaseService.firestore!
-          .collection('partnerConnections')
-          .where('memberUids', arrayContains: currentUid)
-          .where('status', isEqualTo: 'active')
-          .limit(1)
-          .snapshots()
-          .listen((snapshot) async {
-        if (snapshot.docs.isNotEmpty) {
-          final doc = snapshot.docs.first;
-          final connection = PartnerConnectionModel.fromJson(doc.data());
-          _currentConnection = connection;
-          _connectionController.add(connection);
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      // 1. Initial fetch of active connection
+      _fetchActiveConnection(currentUid);
 
-          final partnerUid = connection.getPartnerUid(currentUid);
-          if (partnerUid != null) {
-            _partnerUser = await _fetchUser(partnerUid);
-          }
-        } else {
-          _currentConnection = null;
-          _partnerUser = null;
-          _connectionController.add(null);
-        }
-      });
+      // 2. Stream partner connection changes
+      try {
+        _connectionSubscription = supabaseService.client!
+            .from('partner_connections')
+            .stream(primaryKey: ['id'])
+            .listen((List<Map<String, dynamic>> records) async {
+              PartnerConnectionModel? foundConn;
+              for (final row in records) {
+                final conn = PartnerConnectionModel.fromJson(row);
+                if (conn.memberUids.contains(currentUid) && conn.isActive) {
+                  foundConn = conn;
+                  break;
+                }
+              }
 
-      // Query pending connection requests for currentUid
-      _requestsSubscription = firebaseService.firestore!
-          .collection('connectionRequests')
-          .where('recipientUid', isEqualTo: currentUid)
-          .where('status', isEqualTo: 'pending')
-          .snapshots()
-          .listen((snapshot) {
-        final list = snapshot.docs
-            .map((doc) => ConnectionRequestModel.fromJson(doc.data()))
-            .toList();
-        _pendingRequestsController.add(list);
-      });
+              if (foundConn != null) {
+                _currentConnection = foundConn;
+                _connectionController.add(foundConn);
+                final partnerUid = foundConn.getPartnerUid(currentUid);
+                if (partnerUid != null) {
+                  _partnerUser = await _fetchUser(partnerUid);
+                }
+              } else {
+                _currentConnection = null;
+                _partnerUser = null;
+                _connectionController.add(null);
+              }
+            });
+      } catch (_) {
+        _fetchActiveConnection(currentUid);
+      }
     } else {
-      // Local fallback mode: check storage or mock state
+      // Local fallback mode
       _loadLocalConnection(currentUid);
     }
   }
 
+  Future<void> _fetchActiveConnection(String currentUid) async {
+    try {
+      if (supabaseService.client == null) return;
+      final res = await supabaseService.client!
+          .from('partner_connections')
+          .select()
+          .eq('status', 'active');
+
+      PartnerConnectionModel? activeConn;
+      for (final row in res) {
+        final conn =
+            PartnerConnectionModel.fromJson(Map<String, dynamic>.from(row));
+        if (conn.memberUids.contains(currentUid)) {
+          activeConn = conn;
+          break;
+        }
+      }
+
+      if (activeConn != null) {
+        _currentConnection = activeConn;
+        _connectionController.add(activeConn);
+        final partnerUid = activeConn.getPartnerUid(currentUid);
+        if (partnerUid != null) {
+          _partnerUser = await _fetchUser(partnerUid);
+        }
+      } else {
+        _currentConnection = null;
+        _partnerUser = null;
+        _connectionController.add(null);
+      }
+    } catch (_) {}
+  }
+
   void _loadLocalConnection(String currentUid) {
-    final raw = storageService.getString('local_connection_$currentUid');
-    if (raw != null) {
-      // Can be populated if local pairing simulation was executed
-    }
     _connectionController.add(_currentConnection);
   }
 
   Future<UserModel?> _fetchUser(String uid) async {
     try {
-      if (firebaseService.isConfigured && firebaseService.firestore != null) {
-        final doc = await firebaseService.firestore!.collection('users').doc(uid).get();
-        if (doc.exists && doc.data() != null) {
-          return UserModel.fromJson(doc.data()!);
+      if (supabaseService.isConfigured && supabaseService.client != null) {
+        final res = await supabaseService.client!
+            .from('users')
+            .select()
+            .eq('id', uid)
+            .maybeSingle();
+
+        if (res != null) {
+          return UserModel.fromJson(Map<String, dynamic>.from(res));
         }
       }
     } catch (_) {}
     return null;
   }
 
-  /// Generates a unique 6-character uppercase alphanumeric code
   String _generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final random = Random();
@@ -131,11 +162,10 @@ class PartnerRepository {
       createdAt: now,
     );
 
-    if (firebaseService.isConfigured && firebaseService.firestore != null) {
-      await firebaseService.firestore!
-          .collection('connectionInvites')
-          .doc(inviteId)
-          .set(invite.toJson());
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      await supabaseService.client!
+          .from('connection_invites')
+          .insert(invite.toJson());
     }
 
     return invite;
@@ -148,39 +178,35 @@ class PartnerRepository {
   }) async {
     final cleanCode = code.trim().toUpperCase();
 
-    if (firebaseService.isConfigured && firebaseService.firestore != null) {
-      final query = await firebaseService.firestore!
-          .collection('connectionInvites')
-          .where('code', isEqualTo: cleanCode)
-          .where('status', isEqualTo: 'pending')
-          .limit(1)
-          .get();
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      final res = await supabaseService.client!
+          .from('connection_invites')
+          .select()
+          .eq('code', cleanCode)
+          .eq('status', 'pending')
+          .maybeSingle();
 
-      if (query.docs.isEmpty) {
-        throw Exception('Invalid or expired invitation code. Please ask your partner for a new code.');
+      if (res == null) {
+        throw Exception(
+          'Invalid or expired invitation code. Please ask your partner for a new code.',
+        );
       }
 
-      final inviteDoc = query.docs.first;
-      final invite = InviteModel.fromJson(inviteDoc.data());
+      final invite = InviteModel.fromJson(Map<String, dynamic>.from(res));
 
       if (invite.isExpired) {
-        await inviteDoc.reference.update({'status': 'expired'});
-        throw Exception('This invitation code has expired. Please ask your partner to generate a new code.');
+        await supabaseService.client!
+            .from('connection_invites')
+            .update({'status': 'expired'}).eq('id', invite.id);
+        throw Exception(
+          'This invitation code has expired. Please ask your partner to generate a new code.',
+        );
       }
 
       if (invite.creatorUid == currentUser.id) {
-        throw Exception('You cannot pair with yourself. Please share this code with your partner.');
-      }
-
-      // Check if either user is already connected
-      final existingCheck = await firebaseService.firestore!
-          .collection('partnerConnections')
-          .where('memberUids', arrayContains: currentUser.id)
-          .where('status', isEqualTo: 'active')
-          .get();
-
-      if (existingCheck.docs.isNotEmpty) {
-        throw Exception('You are already connected to a partner. Disconnect first to pair with another.');
+        throw Exception(
+          'You cannot pair with yourself. Please share this code with your partner.',
+        );
       }
 
       // Create mutual connection
@@ -195,13 +221,13 @@ class PartnerRepository {
         updatedAt: now,
       );
 
-      final batch = firebaseService.firestore!.batch();
-      batch.set(
-        firebaseService.firestore!.collection('partnerConnections').doc(connectionId),
-        connection.toJson(),
-      );
-      batch.update(inviteDoc.reference, {'status': 'accepted'});
-      await batch.commit();
+      await supabaseService.client!
+          .from('partner_connections')
+          .insert(connection.toJson());
+
+      await supabaseService.client!
+          .from('connection_invites')
+          .update({'status': 'accepted'}).eq('id', invite.id);
 
       _currentConnection = connection;
       _partnerUser = await _fetchUser(invite.creatorUid) ??
@@ -215,7 +241,7 @@ class PartnerRepository {
 
       return connection;
     } else {
-      // Local demo mode: simulate successful connection
+      // Local demo mode
       final connectionId = const Uuid().v4();
       final partnerUid = const Uuid().v4();
       final now = DateTime.now();
@@ -247,18 +273,16 @@ class PartnerRepository {
     required String connectionId,
     required String currentUid,
   }) async {
-    if (firebaseService.isConfigured && firebaseService.firestore != null) {
-      await firebaseService.firestore!
-          .collection('partnerConnections')
-          .doc(connectionId)
-          .update({
-        'status': 'disconnected',
-        'updatedAt': DateTime.now().toIso8601String(),
-      });
-      await firebaseService.firestore!
-          .collection('locationSharing')
-          .doc(currentUid)
-          .set({'enabled': false, 'updatedAt': DateTime.now().toIso8601String()}, SetOptions(merge: true));
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      try {
+        await supabaseService.client!
+            .from('partner_connections')
+            .update({
+              'status': 'disconnected',
+              'updatedAt': DateTime.now().toIso8601String(),
+            })
+            .eq('id', connectionId);
+      } catch (_) {}
     }
 
     _currentConnection = null;
@@ -271,19 +295,17 @@ class PartnerRepository {
     required String connectionId,
     required String currentUid,
   }) async {
-    if (firebaseService.isConfigured && firebaseService.firestore != null) {
-      await firebaseService.firestore!
-          .collection('partnerConnections')
-          .doc(connectionId)
-          .update({
-        'status': 'blocked',
-        'blockedByUid': currentUid,
-        'updatedAt': DateTime.now().toIso8601String(),
-      });
-      await firebaseService.firestore!
-          .collection('locationSharing')
-          .doc(currentUid)
-          .set({'enabled': false, 'updatedAt': DateTime.now().toIso8601String()}, SetOptions(merge: true));
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      try {
+        await supabaseService.client!
+            .from('partner_connections')
+            .update({
+              'status': 'blocked',
+              'blockedByUid': currentUid,
+              'updatedAt': DateTime.now().toIso8601String(),
+            })
+            .eq('id', connectionId);
+      } catch (_) {}
     }
 
     _currentConnection = null;
@@ -293,9 +315,7 @@ class PartnerRepository {
 
   void dispose() {
     _connectionSubscription?.cancel();
-    _requestsSubscription?.cancel();
     _connectionController.close();
     _pendingRequestsController.close();
   }
 }
-

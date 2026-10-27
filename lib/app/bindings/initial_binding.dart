@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/location_repository.dart';
 import '../../data/repositories/partner_repository.dart';
-import '../../data/services/firebase_service.dart';
 import '../../data/services/location_service.dart';
 import '../../data/services/storage_service.dart';
+import '../../data/services/supabase_service.dart';
 import '../../modules/auth/controllers/auth_controller.dart';
 import '../../modules/home/controllers/home_controller.dart';
 import '../../modules/live_map/controllers/live_map_controller.dart';
@@ -24,10 +24,10 @@ class InitialBinding extends Bindings {
     // Services
     Get.lazyPut<LocationService>(() => LocationService(), fenix: true);
 
-    // Repositories (dependencies on FirebaseService & StorageService registered in main())
+    // Repositories (dependencies on SupabaseService & StorageService registered in main())
     Get.lazyPut<AuthRepository>(
       () => AuthRepository(
-        firebaseService: Get.find<FirebaseService>(),
+        supabaseService: Get.find<SupabaseService>(),
         storageService: Get.find<StorageService>(),
       ),
       fenix: true,
@@ -35,7 +35,7 @@ class InitialBinding extends Bindings {
 
     Get.lazyPut<PartnerRepository>(
       () => PartnerRepository(
-        firebaseService: Get.find<FirebaseService>(),
+        supabaseService: Get.find<SupabaseService>(),
         storageService: Get.find<StorageService>(),
       ),
       fenix: true,
@@ -43,7 +43,7 @@ class InitialBinding extends Bindings {
 
     Get.lazyPut<LocationRepository>(
       () => LocationRepository(
-        firebaseService: Get.find<FirebaseService>(),
+        supabaseService: Get.find<SupabaseService>(),
         storageService: Get.find<StorageService>(),
       ),
       fenix: true,

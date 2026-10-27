@@ -1,19 +1,22 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/location_data_model.dart';
-import '../services/firebase_service.dart';
 import '../services/storage_service.dart';
+import '../services/supabase_service.dart';
 
 class LocationRepository {
-  final FirebaseService firebaseService;
+  final SupabaseService supabaseService;
   final StorageService storageService;
 
-  final _userLocationController = StreamController<LocationDataModel?>.broadcast();
-  Stream<LocationDataModel?> get userLocationStream => _userLocationController.stream;
+  final _userLocationController =
+      StreamController<LocationDataModel?>.broadcast();
+  Stream<LocationDataModel?> get userLocationStream =>
+      _userLocationController.stream;
 
-  final _partnerLocationController = StreamController<LocationDataModel?>.broadcast();
-  Stream<LocationDataModel?> get partnerLocationStream => _partnerLocationController.stream;
+  final _partnerLocationController =
+      StreamController<LocationDataModel?>.broadcast();
+  Stream<LocationDataModel?> get partnerLocationStream =>
+      _partnerLocationController.stream;
 
   final _partnerSharingController = StreamController<bool>.broadcast();
   Stream<bool> get partnerSharingStream => _partnerSharingController.stream;
@@ -28,14 +31,13 @@ class LocationRepository {
   bool get isPartnerSharing => _isPartnerSharing;
 
   StreamSubscription? _partnerLocSubscription;
-  StreamSubscription? _partnerSharingSubscription;
 
   LocationRepository({
-    required this.firebaseService,
+    required this.supabaseService,
     required this.storageService,
   });
 
-  /// Update current user's live coordinates in Firestore `locations/{uid}`
+  /// Update current user's live coordinates in Supabase `locations` table
   Future<void> updateCurrentLocation({
     required String uid,
     required Position position,
@@ -57,17 +59,14 @@ class LocationRepository {
     _currentUserLocation = model;
     _userLocationController.add(model);
 
-    if (firebaseService.isConfigured && firebaseService.firestore != null) {
+    if (supabaseService.isConfigured && supabaseService.client != null) {
       try {
-        await firebaseService.firestore!.collection('locations').doc(uid).set(
-              model.toJson(),
-              SetOptions(merge: true),
-            );
+        await supabaseService.client!.from('locations').upsert(model.toJson());
       } catch (_) {}
     }
   }
 
-  /// Toggle or update sharing status in `locationSharing/{uid}`
+  /// Toggle or update sharing status in `locations` table
   Future<void> setSharingStatus({
     required String uid,
     required bool enabled,
@@ -79,18 +78,15 @@ class LocationRepository {
       _userLocationController.add(_currentUserLocation);
     }
 
-    if (firebaseService.isConfigured && firebaseService.firestore != null) {
+    if (supabaseService.isConfigured && supabaseService.client != null) {
       try {
-        await firebaseService.firestore!.collection('locationSharing').doc(uid).set({
-          'enabled': enabled,
-          'updatedAt': DateTime.now().toIso8601String(),
-        }, SetOptions(merge: true));
-
-        // Also reflect in latest location document
-        await firebaseService.firestore!.collection('locations').doc(uid).set({
-          'isSharing': enabled,
-          'updatedAt': DateTime.now().toIso8601String(),
-        }, SetOptions(merge: true));
+        await supabaseService.client!
+            .from('locations')
+            .update({
+              'isSharing': enabled,
+              'updatedAt': DateTime.now().toIso8601String(),
+            })
+            .eq('uid', uid);
       } catch (_) {}
     }
   }
@@ -98,7 +94,6 @@ class LocationRepository {
   /// Listen to partner's location updates and sharing status
   void listenToPartnerLocation(String? partnerUid) {
     _partnerLocSubscription?.cancel();
-    _partnerSharingSubscription?.cancel();
 
     if (partnerUid == null || partnerUid.isEmpty) {
       _partnerLocation = null;
@@ -108,40 +103,35 @@ class LocationRepository {
       return;
     }
 
-    if (firebaseService.isConfigured && firebaseService.firestore != null) {
-      // 1. Listen to partner's sharing status
-      _partnerSharingSubscription = firebaseService.firestore!
-          .collection('locationSharing')
-          .doc(partnerUid)
-          .snapshots()
-          .listen((doc) {
-        if (doc.exists && doc.data() != null) {
-          final enabled = doc.data()!['enabled'] as bool? ?? false;
-          _isPartnerSharing = enabled;
-          _partnerSharingController.add(enabled);
-        } else {
-          _isPartnerSharing = false;
-          _partnerSharingController.add(false);
-        }
-      });
+    if (supabaseService.isConfigured && supabaseService.client != null) {
+      // 1. Initial fetch
+      _fetchInitialPartnerLocation(partnerUid);
 
-      // 2. Listen to partner's coordinate document
-      _partnerLocSubscription = firebaseService.firestore!
-          .collection('locations')
-          .doc(partnerUid)
-          .snapshots()
-          .listen((doc) {
-        if (doc.exists && doc.data() != null) {
-          final loc = LocationDataModel.fromJson(doc.data()!);
-          _partnerLocation = loc;
-          _partnerLocationController.add(loc);
-        } else {
-          _partnerLocation = null;
-          _partnerLocationController.add(null);
-        }
-      });
+      // 2. Stream partner updates via Supabase Realtime
+      try {
+        _partnerLocSubscription = supabaseService.client!
+            .from('locations')
+            .stream(primaryKey: ['uid'])
+            .eq('uid', partnerUid)
+            .listen((List<Map<String, dynamic>> records) {
+              if (records.isNotEmpty) {
+                final loc = LocationDataModel.fromJson(records.first);
+                _partnerLocation = loc;
+                _isPartnerSharing = loc.isSharing;
+                _partnerLocationController.add(loc);
+                _partnerSharingController.add(loc.isSharing);
+              } else {
+                _partnerLocation = null;
+                _isPartnerSharing = false;
+                _partnerLocationController.add(null);
+                _partnerSharingController.add(false);
+              }
+            });
+      } catch (_) {
+        _fetchInitialPartnerLocation(partnerUid);
+      }
     } else {
-      // Local demo mode: provide simulated partner location nearby
+      // Local fallback mode: simulated partner location nearby
       _isPartnerSharing = true;
       _partnerSharingController.add(true);
 
@@ -159,9 +149,27 @@ class LocationRepository {
     }
   }
 
+  Future<void> _fetchInitialPartnerLocation(String partnerUid) async {
+    try {
+      if (supabaseService.client == null) return;
+      final res = await supabaseService.client!
+          .from('locations')
+          .select()
+          .eq('uid', partnerUid)
+          .maybeSingle();
+
+      if (res != null) {
+        final loc = LocationDataModel.fromJson(Map<String, dynamic>.from(res));
+        _partnerLocation = loc;
+        _isPartnerSharing = loc.isSharing;
+        _partnerLocationController.add(loc);
+        _partnerSharingController.add(loc.isSharing);
+      }
+    } catch (_) {}
+  }
+
   void stopListeningPartner() {
     _partnerLocSubscription?.cancel();
-    _partnerSharingSubscription?.cancel();
   }
 
   void dispose() {
@@ -171,4 +179,3 @@ class LocationRepository {
     _partnerSharingController.close();
   }
 }
-

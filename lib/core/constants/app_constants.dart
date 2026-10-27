@@ -5,6 +5,10 @@ class AppConstants {
   static const String appTagline = 'Stay close, wherever life takes you';
   static const String appVersion = '1.0.0';
 
+  // Supabase Configuration
+  static const String supabaseUrl = 'https://muqjxewkuymkzyjvipzc.supabase.co';
+  static const String supabaseAnonKey = 'sb_publishable_2MuePQ0WxN1O3MXx07QEeQ_KKZyFiMq';
+
   // Partner Pairing
   static const int inviteCodeLength = 6;
   static const Duration inviteCodeValidity = Duration(hours: 24);

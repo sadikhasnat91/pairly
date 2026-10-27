@@ -6,8 +6,8 @@ import 'app/bindings/initial_binding.dart';
 import 'app/routes/app_pages.dart';
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
-import 'data/services/firebase_service.dart';
 import 'data/services/storage_service.dart';
+import 'data/services/supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,8 +26,8 @@ void main() async {
   final storageService = await StorageService().init();
   Get.put<StorageService>(storageService, permanent: true);
 
-  final firebaseService = await FirebaseService().init();
-  Get.put<FirebaseService>(firebaseService, permanent: true);
+  final supabaseService = await SupabaseService().init();
+  Get.put<SupabaseService>(supabaseService, permanent: true);
 
   runApp(const PairlyApp());
 }
