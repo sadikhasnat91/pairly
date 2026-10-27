@@ -48,6 +48,21 @@ class LiveMapController extends GetxController {
     super.onInit();
     _initData();
     fetchCurrentLocation();
+    _startContinuousTracking();
+  }
+
+  Future<void> _startContinuousTracking() async {
+    final uid = _authRepo.currentUser?.id;
+    if (uid == null) return;
+    await _locationService.startTracking(
+      onUpdate: (position) {
+        _locationRepo.updateCurrentLocation(
+          uid: uid,
+          position: position,
+          isSharing: true,
+        );
+      },
+    );
   }
 
   Future<void> fetchCurrentLocation() async {
@@ -60,12 +75,14 @@ class LiveMapController extends GetxController {
           position: pos,
           isSharing: true,
         );
-        final latLng = LatLng(pos.latitude, pos.longitude);
-        mapController?.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(target: latLng, zoom: AppConstants.defaultZoom),
-          ),
-        );
+        if (partnerLocation.value == null) {
+          final latLng = LatLng(pos.latitude, pos.longitude);
+          mapController?.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(target: latLng, zoom: AppConstants.defaultZoom),
+            ),
+          );
+        }
       }
     } catch (_) {}
   }
@@ -153,7 +170,7 @@ class LiveMapController extends GetxController {
     }
 
     // 2. Partner marker & accuracy circle (only if partner is sharing & location available)
-    if (pLoc != null && isPartnerSharing.value) {
+    if (pLoc != null && (isPartnerSharing.value || pLoc.isSharing)) {
       final pLatLng = LatLng(pLoc.latitude, pLoc.longitude);
       final isFresh = !pLoc.isStale;
       final pColor = isFresh ? AppColors.secondaryAccent : AppColors.warning;
@@ -195,7 +212,7 @@ class LiveMapController extends GetxController {
     circles.assignAll(newCircles);
 
     // Compute metrics
-    if (uLoc != null && pLoc != null && isPartnerSharing.value) {
+    if (uLoc != null && pLoc != null && (isPartnerSharing.value || pLoc.isSharing)) {
       final meters = LocationUtils.calculateDistanceInMeters(
         uLoc.latitude,
         uLoc.longitude,
@@ -304,7 +321,7 @@ class LiveMapController extends GetxController {
 
     if (mapController == null) return;
 
-    if (uLoc != null && pLoc != null && isPartnerSharing.value) {
+    if (uLoc != null && pLoc != null && (isPartnerSharing.value || pLoc.isSharing)) {
       final bounds = LocationUtils.createBounds(
         LatLng(uLoc.latitude, uLoc.longitude),
         LatLng(pLoc.latitude, pLoc.longitude),

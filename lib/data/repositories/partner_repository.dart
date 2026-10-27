@@ -129,9 +129,28 @@ class PartnerRepository {
         if (res != null) {
           return UserModel.fromJson(Map<String, dynamic>.from(res));
         }
+
+        // Check if partner created an invite with their display name
+        final inviteRes = await supabaseService.client!
+            .from('connection_invites')
+            .select('creatorName')
+            .eq('creatorUid', uid)
+            .maybeSingle();
+        final name = inviteRes?['creatorName'] as String? ?? 'Partner';
+        return UserModel(
+          id: uid,
+          email: '',
+          displayName: name,
+          createdAt: DateTime.now(),
+        );
       }
     } catch (_) {}
-    return null;
+    return UserModel(
+      id: uid,
+      email: '',
+      displayName: 'Partner',
+      createdAt: DateTime.now(),
+    );
   }
 
   String _generateCode() {

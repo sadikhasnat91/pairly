@@ -81,7 +81,7 @@ class LiveMapView extends GetView<LiveMapController> {
         onMapCreated: controller.onMapCreated,
         markers: controller.markers,
         circles: controller.circles,
-        myLocationEnabled: true,
+        myLocationEnabled: false, // Prevents duplicate blue dot overlapping with custom ME marker
         myLocationButtonEnabled: false,
         zoomControlsEnabled: false,
         compassEnabled: true,

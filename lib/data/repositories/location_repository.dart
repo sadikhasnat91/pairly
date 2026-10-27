@@ -31,6 +31,7 @@ class LocationRepository {
   bool get isPartnerSharing => _isPartnerSharing;
 
   StreamSubscription? _partnerLocSubscription;
+  Timer? _partnerPollTimer;
 
   LocationRepository({
     required this.supabaseService,
@@ -94,6 +95,7 @@ class LocationRepository {
   /// Listen to partner's location updates and sharing status
   void listenToPartnerLocation(String? partnerUid) {
     _partnerLocSubscription?.cancel();
+    _partnerPollTimer?.cancel();
 
     if (partnerUid == null || partnerUid.isEmpty) {
       _partnerLocation = null;
@@ -104,10 +106,15 @@ class LocationRepository {
     }
 
     if (supabaseService.isConfigured && supabaseService.client != null) {
-      // 1. Initial fetch
+      // 1. Initial immediate fetch
       _fetchInitialPartnerLocation(partnerUid);
 
-      // 2. Stream partner updates via Supabase Realtime
+      // 2. Continuous fallback polling every 4 seconds for reliable delivery over mobile networks
+      _partnerPollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+        _fetchInitialPartnerLocation(partnerUid);
+      });
+
+      // 3. Stream partner updates via Supabase Realtime
       try {
         _partnerLocSubscription = supabaseService.client!
             .from('locations')
@@ -120,11 +127,6 @@ class LocationRepository {
                 _isPartnerSharing = loc.isSharing;
                 _partnerLocationController.add(loc);
                 _partnerSharingController.add(loc.isSharing);
-              } else {
-                _partnerLocation = null;
-                _isPartnerSharing = false;
-                _partnerLocationController.add(null);
-                _partnerSharingController.add(false);
               }
             });
       } catch (_) {
@@ -170,6 +172,7 @@ class LocationRepository {
 
   void stopListeningPartner() {
     _partnerLocSubscription?.cancel();
+    _partnerPollTimer?.cancel();
   }
 
   void dispose() {
