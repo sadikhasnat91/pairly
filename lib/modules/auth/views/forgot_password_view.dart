@@ -6,9 +6,9 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/validator.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/forgot_password_controller.dart';
 
-class ForgotPasswordView extends GetView<AuthController> {
+class ForgotPasswordView extends GetView<ForgotPasswordController> {
   const ForgotPasswordView({super.key});
 
   @override

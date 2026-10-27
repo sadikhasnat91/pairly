@@ -6,9 +6,9 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/validator.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/register_controller.dart';
 
-class RegisterView extends GetView<AuthController> {
+class RegisterView extends GetView<RegisterController> {
   const RegisterView({super.key});
 
   @override

@@ -69,3 +69,4 @@ CREATE POLICY "Allow all operations for users" ON public.users FOR ALL USING (tr
 CREATE POLICY "Allow all operations for locations" ON public.locations FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations for partner_connections" ON public.partner_connections FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations for connection_invites" ON public.connection_invites FOR ALL USING (true) WITH CHECK (true);
+

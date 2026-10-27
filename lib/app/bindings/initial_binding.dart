@@ -7,6 +7,8 @@ import '../../data/services/location_service.dart';
 import '../../data/services/storage_service.dart';
 import '../../data/services/supabase_service.dart';
 import '../../modules/auth/controllers/auth_controller.dart';
+import '../../modules/auth/controllers/forgot_password_controller.dart';
+import '../../modules/auth/controllers/register_controller.dart';
 import '../../modules/home/controllers/home_controller.dart';
 import '../../modules/live_map/controllers/live_map_controller.dart';
 import '../../modules/main_layout/controllers/main_layout_controller.dart';
@@ -57,6 +59,11 @@ class InitialBinding extends Bindings {
       fenix: true,
     );
     Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+    Get.lazyPut<RegisterController>(() => RegisterController(), fenix: true);
+    Get.lazyPut<ForgotPasswordController>(
+      () => ForgotPasswordController(),
+      fenix: true,
+    );
     Get.lazyPut<MainLayoutController>(
       () => MainLayoutController(),
       fenix: true,
