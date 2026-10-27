@@ -32,11 +32,11 @@ class RegisterController extends GetxController {
   }
 
   Future<void> register() async {
-    final email = emailController.text.trim();
+    final cleanEmail = emailController.text.trim().toLowerCase();
     final password = passwordController.text;
     final confirmPassword = confirmPasswordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
+    if (cleanEmail.isEmpty || password.isEmpty) {
       Get.snackbar(
         'Incomplete Form',
         'Please complete all required fields.',
@@ -54,23 +54,34 @@ class RegisterController extends GetxController {
       return;
     }
 
-    final name = email.split('@').first;
+    final name = cleanEmail.split('@').first;
 
     try {
       isLoading.value = true;
       errorMessage.value = '';
       await _authRepository.register(
-        email: email,
+        email: cleanEmail,
         password: password,
         displayName: name,
       );
       Get.offAllNamed(AppRoutes.profileSetup);
     } catch (e) {
-      errorMessage.value = e.toString().replaceAll('Exception:', '').trim();
+      final errStr = e.toString();
+      if (errStr.contains('email_address_invalid') ||
+          errStr.contains('rate_limit') ||
+          errStr.contains('over_email_send_rate_limit')) {
+        errorMessage.value =
+            'Please turn OFF "Confirm email" in Supabase Dashboard > Authentication > Providers > Email.';
+      } else if (errStr.contains('user_already_exists')) {
+        errorMessage.value = 'An account with this email already exists. Please sign in.';
+      } else {
+        errorMessage.value = errStr.replaceAll('Exception:', '').replaceAll('AuthApiException:', '').trim();
+      }
       Get.snackbar(
         'Registration Failed',
         errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 6),
       );
     } finally {
       isLoading.value = false;
@@ -85,3 +96,4 @@ class RegisterController extends GetxController {
     super.onClose();
   }
 }
+

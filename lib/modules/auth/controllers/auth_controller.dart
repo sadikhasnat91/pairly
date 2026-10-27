@@ -25,7 +25,7 @@ class AuthController extends GetxController {
   }
 
   Future<void> signIn() async {
-    final email = emailController.text.trim();
+    final email = emailController.text.trim().toLowerCase();
     final password = passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
