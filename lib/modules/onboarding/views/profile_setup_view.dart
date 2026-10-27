@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
-import '../../auth/controllers/auth_controller.dart';
+import '../controllers/profile_setup_controller.dart';
 
-class ProfileSetupView extends GetView<AuthController> {
+class ProfileSetupView extends GetView<ProfileSetupController> {
   const ProfileSetupView({super.key});
 
   @override
@@ -46,9 +45,7 @@ class ProfileSetupView extends GetView<AuthController> {
                         color: AppColors.cardSubtle,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.primaryAccent,
-                          width: 2,
-                        ),
+                            color: AppColors.primaryAccent, width: 2),
                       ),
                       child: const Center(
                         child: Icon(
@@ -96,7 +93,7 @@ class ProfileSetupView extends GetView<AuthController> {
                 prefixIcon: Icons.edit_note_outlined,
               ),
               const SizedBox(height: 28),
-              // Mandatory privacy guarantee card
+              // Privacy guarantee card
               AppCard(
                 backgroundColor: AppColors.secondaryBackground,
                 padding: const EdgeInsets.all(16),

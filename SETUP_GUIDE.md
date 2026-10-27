@@ -124,3 +124,4 @@ lib/
 2. **Single Latest Location Document:** In Cloud Firestore (`locations/{uid}`), only the latest coordinate is stored with its accuracy and timestamp, avoiding unconsented trail logging.
 3. **Immediate Revocation:** If a user pauses sharing or disconnects a partner, Firestore security rules and client-side listeners immediately cut off coordinate access.
 4. **Stale Location Protection:** If an update is older than 15 minutes, the app visibly labels it as **Outdated Location** or **Offline**, preventing misleading timestamps.
+

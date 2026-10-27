@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -28,22 +27,16 @@ class RegisterView extends GetView<AuthController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Create Account', style: AppTypography.displayMedium),
+              Text(
+                'Create Account',
+                style: AppTypography.displayMedium,
+              ),
               const SizedBox(height: 8),
               Text(
                 'Start sharing and staying connected with your partner.',
                 style: AppTypography.bodyMedium,
               ),
               const SizedBox(height: 32),
-              AppTextField(
-                controller: controller.nameController,
-                label: 'Your Name',
-                hintText: 'e.g. Jordan Lee',
-                prefixIcon: Icons.person_outline,
-                textCapitalization: TextCapitalization.words,
-                validator: Validators.validateName,
-              ),
-              const SizedBox(height: 20),
               AppTextField(
                 controller: controller.emailController,
                 label: 'Email Address',

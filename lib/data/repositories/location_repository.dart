@@ -171,3 +171,4 @@ class LocationRepository {
     _partnerSharingController.close();
   }
 }
+

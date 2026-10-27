@@ -44,3 +44,4 @@ class DateFormatter {
     return DateFormat('MMM d, yyyy').format(dateTime);
   }
 }
+

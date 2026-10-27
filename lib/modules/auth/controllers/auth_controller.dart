@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../app/routes/app_routes.dart';
 import '../../../data/repositories/auth_repository.dart';
 
@@ -10,8 +9,6 @@ class AuthController extends GetxController {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-  final nameController = TextEditingController();
-  final statusController = TextEditingController();
 
   final isPasswordVisible = false.obs;
   final isConfirmPasswordVisible = false.obs;
@@ -57,12 +54,11 @@ class AuthController extends GetxController {
   }
 
   Future<void> register() async {
-    final name = nameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text;
     final confirmPassword = confirmPasswordController.text;
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       Get.snackbar(
         'Incomplete Form',
         'Please complete all required fields.',
@@ -79,6 +75,9 @@ class AuthController extends GetxController {
       );
       return;
     }
+
+    // Use email prefix as default name if no name entered
+    final name = email.split('@').first;
 
     try {
       isLoading.value = true;
@@ -132,35 +131,11 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> completeProfileSetup() async {
-    final status = statusController.text.trim();
-    final name = nameController.text.trim();
-
-    try {
-      isLoading.value = true;
-      await _authRepository.updateProfile(
-        displayName: name.isNotEmpty ? name : null,
-        statusMessage: status.isNotEmpty ? status : 'Connected with Pairly',
-      );
-      Get.offAllNamed(AppRoutes.mainLayout);
-    } catch (e) {
-      Get.snackbar(
-        'Setup Failed',
-        e.toString().replaceAll('Exception:', '').trim(),
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
   @override
   void onClose() {
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
-    nameController.dispose();
-    statusController.dispose();
     super.onClose();
   }
 }

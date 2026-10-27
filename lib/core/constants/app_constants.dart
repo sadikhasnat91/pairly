@@ -27,3 +27,4 @@ class AppConstants {
   static const String keyHasCompletedOnboarding = 'pairly_completed_onboarding';
   static const String keySafeArrivalDestination = 'pairly_safe_arrival_dest';
 }
+

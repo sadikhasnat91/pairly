@@ -21,7 +21,7 @@ class LiveMapView extends GetView<LiveMapController> {
       backgroundColor: AppColors.primaryBackground,
       body: Stack(
         children: [
-          // Interactive Google Map
+          // Interactive Google Map with Error Fallback
           Obx(() {
             final uLoc = controller.userLocation.value;
             final pLoc = controller.partnerLocation.value;
@@ -35,22 +35,7 @@ class LiveMapView extends GetView<LiveMapController> {
                     AppConstants.defaultLongitude,
                   );
 
-            return GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: initialTarget,
-                zoom: AppConstants.defaultZoom,
-              ),
-              style: MapStyle.darkThemeJson,
-              onMapCreated: controller.onMapCreated,
-              markers: controller.markers,
-              circles: controller.circles,
-              myLocationEnabled:
-                  false, // We render our own premium themed marker
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
-              compassEnabled: true,
-              mapToolbarEnabled: false,
-            );
+            return _buildMapBody(initialTarget);
           }),
 
           // Top Status Bar Overlay
@@ -80,6 +65,68 @@ class LiveMapView extends GetView<LiveMapController> {
             child: _buildBottomPartnerSheet(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMapBody(LatLng initialTarget) {
+    Widget mapWidget;
+    try {
+      mapWidget = GoogleMap(
+        initialCameraPosition: CameraPosition(
+          target: initialTarget,
+          zoom: AppConstants.defaultZoom,
+        ),
+        style: MapStyle.darkThemeJson,
+        onMapCreated: controller.onMapCreated,
+        markers: controller.markers,
+        circles: controller.circles,
+        myLocationEnabled: false, // Custom themed marker
+        myLocationButtonEnabled: false,
+        zoomControlsEnabled: false,
+        compassEnabled: true,
+        mapToolbarEnabled: false,
+      );
+    } catch (e) {
+      mapWidget = _buildMapFallback(initialTarget);
+    }
+
+    return mapWidget;
+  }
+
+  Widget _buildMapFallback(LatLng target) {
+    return Container(
+      color: const Color(0xFF0D131A),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.primaryAccent.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.map_outlined,
+                color: AppColors.primaryAccent,
+                size: 48,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Live Map Radar',
+              style: AppTypography.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Lat: ${target.latitude.toStringAsFixed(4)}, Lng: ${target.longitude.toStringAsFixed(4)}',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.secondaryText,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -271,8 +318,8 @@ class LiveMapView extends GetView<LiveMapController> {
                         Text(
                           isSharing
                               ? (eta != null
-                                    ? '$eta away • Updated ${DateFormatter.timeAgo(pLoc?.updatedAt)}'
-                                    : 'Sharing active')
+                                  ? '$eta away • Updated ${DateFormatter.timeAgo(pLoc?.updatedAt)}'
+                                  : 'Sharing active')
                               : 'Partner has paused location sharing',
                           style: AppTypography.bodySmall,
                         ),

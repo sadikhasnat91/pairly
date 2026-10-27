@@ -207,3 +207,4 @@ class AuthRepository {
     _authStateController.close();
   }
 }
+
