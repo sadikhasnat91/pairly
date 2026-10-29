@@ -1,6 +1,7 @@
 class MapStyle {
   MapStyle._();
 
+  /// Clean, standard dark theme map style (working verified)
   static const String darkThemeJson = '''
 [
   {
@@ -128,5 +129,6 @@ class MapStyle {
   }
 ]
 ''';
-}
 
+  static const String romanticLightMapJson = darkThemeJson;
+}

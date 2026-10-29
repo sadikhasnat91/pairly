@@ -21,7 +21,7 @@ class ConnectedPartnerView extends GetView<PartnerController> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 12),
-          // Large Partner Avatar & Name
+          // Large Romantic Partner Avatar & Name
           Obx(() {
             final partner = controller.partnerUser.value;
             final conn = controller.activeConnection.value;
@@ -38,17 +38,22 @@ class ConnectedPartnerView extends GetView<PartnerController> {
                 const SizedBox(height: 18),
                 Text(
                   partner?.displayName ?? 'Your Partner',
-                  style: AppTypography.displayMedium,
+                  style: AppTypography.displayMedium.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.mainText,
+                  ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   partner?.email.isNotEmpty == true
                       ? partner!.email
-                      : 'Connected & Active',
-                  style: AppTypography.bodyMedium,
+                      : 'Connected in heart',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.secondaryTextCol,
+                  ),
                 ),
                 const SizedBox(height: 12),
-                StatusBadge(
+                const StatusBadge(
                   type: StatusBadgeType.live,
                   customLabel: 'Paired Relationship',
                 ),
@@ -56,28 +61,28 @@ class ConnectedPartnerView extends GetView<PartnerController> {
 
                 // Details Card
                 AppCard(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(22),
                   child: Column(
                     children: [
                       _buildDetailRow(
                         label: 'CONNECTION STATUS',
                         value: 'Active & Verified',
-                        icon: Icons.check_circle_outline,
-                        color: AppColors.success,
+                        icon: Icons.favorite_rounded,
+                        color: AppColors.softRose,
                       ),
-                      const Divider(height: 24),
+                      const Divider(height: 28),
                       _buildDetailRow(
                         label: 'PAIRED SINCE',
                         value: DateFormatter.formatFullDate(
                           conn?.acceptedAt ?? conn?.createdAt,
                         ),
-                        icon: Icons.calendar_today_outlined,
+                        icon: Icons.calendar_today_rounded,
                       ),
-                      const Divider(height: 24),
+                      const Divider(height: 28),
                       _buildDetailRow(
                         label: 'PRIVACY PROTOCOL',
                         value: 'Mutual Consent Enabled',
-                        icon: Icons.lock_outline,
+                        icon: Icons.shield_outlined,
                       ),
                     ],
                   ),
@@ -91,14 +96,14 @@ class ConnectedPartnerView extends GetView<PartnerController> {
           AppButton(
             text: 'Disconnect Partner',
             variant: AppButtonVariant.secondary,
-            leadingIcon: Icons.link_off,
+            leadingIcon: Icons.link_off_rounded,
             onPressed: controller.confirmDisconnect,
           ),
           const SizedBox(height: 12),
           AppButton(
             text: 'Block Partner',
             variant: AppButtonVariant.danger,
-            leadingIcon: Icons.block,
+            leadingIcon: Icons.block_rounded,
             onPressed: controller.confirmBlock,
           ),
           const SizedBox(height: 20),
@@ -115,19 +120,32 @@ class ConnectedPartnerView extends GetView<PartnerController> {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: color ?? AppColors.secondaryText),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.softPinkSurface,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 18, color: color ?? AppColors.secondaryTextCol),
+        ),
         const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: AppTypography.labelSmall),
+              Text(
+                label,
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.secondaryTextCol,
+                  letterSpacing: 0.8,
+                ),
+              ),
               const SizedBox(height: 2),
               Text(
                 value,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: color ?? AppColors.primaryText,
-                  fontWeight: FontWeight.w600,
+                  color: color ?? AppColors.mainText,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],

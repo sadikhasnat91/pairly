@@ -10,6 +10,8 @@ import '../../../core/widgets/connection_status_card.dart';
 import '../../../core/widgets/location_sharing_card.dart';
 import '../../../core/widgets/partner_avatar.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../video_call/controllers/video_call_controller.dart';
+import '../../video_call/views/video_call_view.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -18,14 +20,14 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Greeting & Header
+              // Top Romantic Greeting & Header
               _buildHeader(),
               const SizedBox(height: 20),
 
@@ -46,7 +48,7 @@ class HomeView extends GetView<HomeController> {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: AppBanner(
-                      message: 'Device location (GPS) is turned off. Please enable GPS to share location.',
+                      message: 'Device GPS is turned off. Please enable GPS to share location.',
                       actionLabel: 'Enable',
                       variant: BannerVariant.warning,
                       onAction: controller.openLocationSettings,
@@ -109,46 +111,69 @@ class HomeView extends GetView<HomeController> {
   Widget _buildHeader() {
     return Obx(() {
       final name = controller.currentUser.value?.displayName ?? 'there';
+      final hour = DateTime.now().hour;
+      final greeting = hour < 12
+          ? 'Good morning'
+          : hour < 17
+              ? 'Good afternoon'
+              : 'Good evening';
+
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Welcome back,',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.secondaryText,
-                ),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.favorite,
+                    size: 13,
+                    color: AppColors.softRose,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    greeting,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.secondaryTextCol,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 name,
                 style: AppTypography.titleLarge.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.mainText,
                 ),
               ),
             ],
           ),
-          Row(
-            children: [
-              IconButton(
-                onPressed: controller.navigateToPrivacy,
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.elevatedCard,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border),
+          IconButton(
+            onPressed: controller.navigateToPrivacy,
+            tooltip: 'Privacy Center',
+            icon: Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: AppColors.whiteCards,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.subtleBorders),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.deepRomanticPlum.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  child: const Icon(
-                    Icons.shield_outlined,
-                    size: 20,
-                    color: AppColors.secondaryText,
-                  ),
-                ),
+                ],
               ),
-            ],
+              child: const Icon(
+                Icons.shield_outlined,
+                size: 20,
+                color: AppColors.deepRomanticPlum,
+              ),
+            ),
           ),
         ],
       );
@@ -176,41 +201,52 @@ class HomeView extends GetView<HomeController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    PartnerAvatar(
-                      name: partner?.displayName,
-                      photoUrl: partner?.photoUrl,
-                      size: 44,
-                      isLive: isSharing && pLoc != null && !pLoc.isStale,
-                      isSharing: isSharing,
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${partner?.displayName ?? "Partner"}\'s Status',
-                          style: AppTypography.titleMedium,
+                Expanded(
+                  child: Row(
+                    children: [
+                      PartnerAvatar(
+                        name: partner?.displayName,
+                        photoUrl: partner?.photoUrl,
+                        size: 48,
+                        isLive: isSharing && pLoc != null && !pLoc.isStale,
+                        isSharing: isSharing,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${partner?.displayName ?? "Partner"}\'s Location',
+                              style: AppTypography.titleMedium.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isSharing
+                                  ? (distance ?? 'Live coordinates available')
+                                  : 'Location sharing is paused',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: isSharing
+                                    ? AppColors.softRose
+                                    : AppColors.secondaryTextCol,
+                                fontWeight: isSharing
+                                    ? FontWeight.w700
+                                    : FontWeight.normal,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isSharing
-                              ? (distance ?? 'Live coordinates available')
-                              : 'Location sharing is paused',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: isSharing
-                                ? AppColors.primaryAccent
-                                : AppColors.secondaryText,
-                            fontWeight: isSharing
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 StatusBadge(
                   type: !isSharing
                       ? StatusBadgeType.paused
@@ -228,38 +264,79 @@ class HomeView extends GetView<HomeController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('LAST KNOWN UPDATE', style: AppTypography.labelSmall),
-                    const SizedBox(height: 4),
-                    Text(
-                      pLoc != null
-                          ? DateFormatter.timeAgo(pLoc.updatedAt)
-                          : 'No recent ping',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.primaryText,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('LAST KNOWN UPDATE', style: AppTypography.labelSmall),
+                      const SizedBox(height: 4),
+                      Text(
+                        pLoc != null
+                            ? DateFormatter.timeAgo(pLoc.updatedAt)
+                            : 'No recent ping',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.mainText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Request Live Video',
+                  onPressed: () {
+                    final conn = controller.connection.value;
+                    final partner = controller.partnerUser.value;
+                    if (conn != null && partner != null) {
+                      final videoCtrl = Get.find<VideoCallController>();
+                      Get.to(() => const VideoCallView());
+                      videoCtrl.initiateCall(
+                        partnerId: partner.id,
+                        connectionId: conn.id,
+                        partnerDisplayName: partner.displayName.isNotEmpty
+                            ? partner.displayName
+                            : 'Partner',
+                      );
+                    }
+                  },
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.softPinkSurface,
+                    foregroundColor: AppColors.softRose,
+                    side: const BorderSide(color: AppColors.subtleBorders),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.all(10),
+                  ),
+                  icon: const Icon(Icons.videocam_rounded, size: 20, color: AppColors.softRose),
+                ),
+                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   onPressed: controller.navigateToLiveMap,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cardSubtle,
-                    foregroundColor: AppColors.primaryAccent,
+                    backgroundColor: AppColors.softPinkSurface,
+                    foregroundColor: AppColors.softRose,
                     elevation: 0,
-                    side: const BorderSide(color: AppColors.border),
+                    side: const BorderSide(color: AppColors.subtleBorders),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
+                      horizontal: 16,
                       vertical: 10,
                     ),
                   ),
-                  icon: const Icon(Icons.map, size: 16),
-                  label: const Text('Open Map'),
+                  icon: const Icon(Icons.near_me_rounded, size: 16),
+                  label: Text(
+                    'Open Map',
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.softRose,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -276,8 +353,9 @@ class HomeView extends GetView<HomeController> {
         Text(
           'Quick Actions',
           style: AppTypography.titleSmall.copyWith(
-            color: AppColors.secondaryText,
-            letterSpacing: 0.5,
+            color: AppColors.secondaryTextCol,
+            letterSpacing: 0.3,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 12),
@@ -285,20 +363,20 @@ class HomeView extends GetView<HomeController> {
           children: [
             Expanded(
               child: _buildActionTile(
-                icon: Icons.my_location,
+                icon: Icons.near_me_rounded,
                 title: 'Live Map',
                 subtitle: 'Mutual Radar',
-                color: AppColors.primaryAccent,
+                color: AppColors.softRose,
                 onTap: controller.navigateToLiveMap,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildActionTile(
-                icon: Icons.shield,
+                icon: Icons.shield_rounded,
                 title: 'Safe Arrival',
                 subtitle: 'Destination Alerts',
-                color: AppColors.secondaryAccent,
+                color: AppColors.successAccent,
                 onTap: controller.navigateToSafeArrival,
               ),
             ),
@@ -318,7 +396,7 @@ class HomeView extends GetView<HomeController> {
     return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      backgroundColor: AppColors.elevatedCard,
+      backgroundColor: AppColors.whiteCards,
       child: Row(
         children: [
           Container(
@@ -336,7 +414,9 @@ class HomeView extends GetView<HomeController> {
               children: [
                 Text(
                   title,
-                  style: AppTypography.labelLarge,
+                  style: AppTypography.labelLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
@@ -359,25 +439,25 @@ class HomeView extends GetView<HomeController> {
       child: Stack(
         children: [
           Container(
-            height: 160,
+            height: 165,
             width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: const Color(0xFF0D131A),
+              borderRadius: BorderRadius.circular(22),
+              color: const Color(0xFFFBF4F2),
             ),
-            child: CustomPaint(painter: _MapGridPainter()),
+            child: CustomPaint(painter: _RomanticMapPreviewPainter()),
           ),
           Container(
-            height: 160,
+            height: 165,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(22),
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  AppColors.primaryBackground.withValues(alpha: 0.85),
+                  AppColors.warmCreamBackground.withValues(alpha: 0.88),
                 ],
               ),
             ),
@@ -394,34 +474,46 @@ class HomeView extends GetView<HomeController> {
                         Row(
                           children: [
                             const Icon(
-                              Icons.pin_drop,
-                              color: AppColors.primaryAccent,
+                              Icons.favorite_rounded,
+                              color: AppColors.softRose,
                               size: 18,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               'Live Map Radar',
-                              style: AppTypography.titleMedium,
+                              style: AppTypography.titleMedium.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.mainText,
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 2),
                         Text(
                           'Tap to inspect live map & partner coordinates',
-                          style: AppTypography.bodySmall,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.secondaryTextCol,
+                          ),
                         ),
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(10),
                       decoration: const BoxDecoration(
-                        color: AppColors.primaryAccent,
+                        gradient: AppColors.blushGradient,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0x35F4A6B8),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: const Icon(
-                        Icons.arrow_forward,
+                        Icons.arrow_forward_rounded,
                         size: 16,
-                        color: AppColors.primaryBackground,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -435,34 +527,35 @@ class HomeView extends GetView<HomeController> {
   }
 }
 
-class _MapGridPainter extends CustomPainter {
+class _RomanticMapPreviewPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF1E2836)
+    final gridPaint = Paint()
+      ..color = AppColors.subtleBorders.withValues(alpha: 0.7)
       ..strokeWidth = 1.0;
 
     const spacing = 32.0;
     for (double x = 0; x < size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
     }
     for (double y = 0; y < size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
-    // Concentric radar ring
-    final radarPaint = Paint()
-      ..color = AppColors.primaryAccent.withValues(alpha: 0.2)
+    // Concentric romantic radar rings
+    final ringPaint = Paint()
+      ..color = AppColors.primaryRomanticBlush.withValues(alpha: 0.25)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 40, radarPaint);
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 70, radarPaint);
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 42, ringPaint);
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 74, ringPaint);
 
+    // Center romantic heart dot
     final dotPaint = Paint()
-      ..color = AppColors.primaryAccent
+      ..color = AppColors.softRose
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 4, dotPaint);
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 5, dotPaint);
   }
 
   @override

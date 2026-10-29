@@ -2,7 +2,7 @@ class AppConstants {
   AppConstants._();
 
   static const String appName = 'Pairly';
-  static const String appTagline = 'Stay close, wherever life takes you';
+  static const String appTagline = 'Closer, Wherever You Are.';
   static const String appVersion = '1.0.0';
 
   // Supabase Configuration
@@ -14,10 +14,10 @@ class AppConstants {
   static const Duration inviteCodeValidity = Duration(hours: 24);
 
   // Location Tracking
-  static const Duration staleLocationThreshold = Duration(minutes: 15);
+  static const Duration staleLocationThreshold = Duration(minutes: 5);
   static const Duration offlineThreshold = Duration(minutes: 30);
-  static const int locationDistanceFilterMeters = 15;
-  static const Duration locationThrottleInterval = Duration(seconds: 15);
+  static const int locationDistanceFilterMeters = 10;
+  static const Duration locationThrottleInterval = Duration(seconds: 5);
 
   // Maps
   static const double defaultLatitude = 37.7749;

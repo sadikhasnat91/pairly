@@ -16,7 +16,7 @@ class MainLayoutView extends GetView<MainLayoutController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       body: Obx(
         () => IndexedStack(
           index: controller.currentIndex.value,

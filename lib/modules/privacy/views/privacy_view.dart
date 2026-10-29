@@ -15,9 +15,12 @@ class PrivacyView extends GetView<PrivacyController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       appBar: AppBar(
-        title: Text('Privacy & Trust Center', style: AppTypography.titleMedium),
+        title: Text(
+          'Privacy & Trust Center',
+          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w700),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -27,19 +30,20 @@ class PrivacyView extends GetView<PrivacyController> {
             children: [
               // Shield Banner
               AppCard(
-                backgroundColor: AppColors.secondaryBackground,
+                backgroundColor: AppColors.whiteCards,
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryAccent.withValues(alpha: 0.15),
+                        color: AppColors.softPinkSurface,
                         shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.subtleBorders),
                       ),
                       child: const Icon(
-                        Icons.security,
-                        color: AppColors.primaryAccent,
+                        Icons.shield_rounded,
+                        color: AppColors.softRose,
                         size: 28,
                       ),
                     ),
@@ -50,12 +54,16 @@ class PrivacyView extends GetView<PrivacyController> {
                         children: [
                           Text(
                             'Mutual Transparency',
-                            style: AppTypography.titleMedium,
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Pairly never tracks you silently or sells your data. You decide who sees you and when.',
-                            style: AppTypography.bodySmall,
+                            'Pairly never tracks you silently. You decide who sees your location and when.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.secondaryTextCol,
+                            ),
                           ),
                         ],
                       ),
@@ -69,7 +77,8 @@ class PrivacyView extends GetView<PrivacyController> {
               Text(
                 'Who Can See My Location',
                 style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.secondaryText,
+                  color: AppColors.secondaryTextCol,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 12),
@@ -82,17 +91,18 @@ class PrivacyView extends GetView<PrivacyController> {
                   child: Row(
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
-                        decoration: const BoxDecoration(
-                          color: AppColors.cardSubtle,
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: AppColors.softPinkSurface,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          partner != null ? Icons.person : Icons.person_off,
+                          partner != null ? Icons.favorite_rounded : Icons.person_off_rounded,
                           color: partner != null
-                              ? AppColors.primaryAccent
-                              : AppColors.secondaryText,
+                              ? AppColors.softRose
+                              : AppColors.secondaryTextCol,
+                          size: 22,
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -104,7 +114,9 @@ class PrivacyView extends GetView<PrivacyController> {
                               partner != null
                                   ? partner.displayName
                                   : 'No one has access',
-                              style: AppTypography.titleSmall,
+                              style: AppTypography.titleSmall.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -113,7 +125,9 @@ class PrivacyView extends GetView<PrivacyController> {
                                         ? 'Streaming active right now'
                                         : 'Paused by you')
                                   : 'Connect with a partner to enable sharing',
-                              style: AppTypography.bodySmall,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.secondaryTextCol,
+                              ),
                             ),
                           ],
                         ),
@@ -134,7 +148,8 @@ class PrivacyView extends GetView<PrivacyController> {
               Text(
                 'Stream Controls',
                 style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.secondaryText,
+                  color: AppColors.secondaryTextCol,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 12),
@@ -150,7 +165,9 @@ class PrivacyView extends GetView<PrivacyController> {
                           children: [
                             Text(
                               'Live Sharing Switch',
-                              style: AppTypography.labelLarge,
+                              style: AppTypography.labelLarge.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Obx(
@@ -158,7 +175,9 @@ class PrivacyView extends GetView<PrivacyController> {
                                 controller.isSharing.value
                                     ? 'Your partner can see your coordinates'
                                     : 'Location streaming is stopped',
-                                style: AppTypography.bodySmall,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.secondaryTextCol,
+                                ),
                               ),
                             ),
                           ],
@@ -166,10 +185,10 @@ class PrivacyView extends GetView<PrivacyController> {
                         Obx(
                           () => Switch(
                             value: controller.isSharing.value,
-                            activeThumbColor: AppColors.primaryAccent,
-                            activeTrackColor: AppColors.primaryAccent
-                                .withValues(alpha: 0.3),
-                            inactiveTrackColor: AppColors.cardSubtle,
+                            activeThumbColor: AppColors.softRose,
+                            activeTrackColor: AppColors.primaryRomanticBlush
+                                .withValues(alpha: 0.35),
+                            inactiveTrackColor: AppColors.softPinkSurface,
                             onChanged: (_) => controller.toggleSharing(),
                           ),
                         ),
@@ -183,14 +202,17 @@ class PrivacyView extends GetView<PrivacyController> {
                         children: [
                           Text(
                             'Last Upload Timestamp',
-                            style: AppTypography.bodyMedium,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.mainText,
+                            ),
                           ),
                           Text(
                             loc != null
                                 ? DateFormatter.timeAgo(loc.updatedAt)
                                 : 'Not recorded',
                             style: AppTypography.labelMedium.copyWith(
-                              color: AppColors.primaryText,
+                              color: AppColors.secondaryTextCol,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -201,11 +223,12 @@ class PrivacyView extends GetView<PrivacyController> {
               ),
               const SizedBox(height: 24),
 
-              // Data Retention Explanation (Requirement 9 & 11)
+              // Data Retention Explanation
               Text(
                 'Data Retention & Integrity',
                 style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.secondaryText,
+                  color: AppColors.secondaryTextCol,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 12),
@@ -215,20 +238,20 @@ class PrivacyView extends GetView<PrivacyController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildPolicyRow(
-                      icon: Icons.history_toggle_off,
+                      icon: Icons.history_toggle_off_rounded,
                       title: 'No Historical Breadcrumb Logging',
                       desc: 'Pairly stores only your single latest GPS coordinate. Old coordinates are never stockpiled or tracked historically.',
                     ),
                     const SizedBox(height: 14),
                     _buildPolicyRow(
-                      icon: Icons.shield,
+                      icon: Icons.shield_rounded,
                       title: 'Immediate Access Revocation',
-                      desc: 'Pausing sharing or disconnecting a partner immediately revokes read permissions across Cloud Firestore.',
+                      desc: 'Pausing sharing or disconnecting a partner immediately revokes read permissions across the database.',
                     ),
                     const SizedBox(height: 14),
                     _buildPolicyRow(
-                      icon: Icons.settings_suggest_outlined,
-                      title: 'Android System Permissions',
+                      icon: Icons.settings_suggest_rounded,
+                      title: 'Device System Permissions',
                       desc: 'Manage fine & coarse location access directly in Android settings at any time.',
                     ),
                   ],
@@ -240,7 +263,7 @@ class PrivacyView extends GetView<PrivacyController> {
               AppButton(
                 text: 'Open Android System Permissions',
                 variant: AppButtonVariant.secondary,
-                leadingIcon: Icons.settings,
+                leadingIcon: Icons.settings_rounded,
                 onPressed: controller.openAppSettings,
               ),
               const SizedBox(height: 14),
@@ -250,7 +273,7 @@ class PrivacyView extends GetView<PrivacyController> {
                 () => AppButton(
                   text: 'Delete Account & Purge Data',
                   variant: AppButtonVariant.danger,
-                  leadingIcon: Icons.delete_outline,
+                  leadingIcon: Icons.delete_outline_rounded,
                   isLoading: controller.isDeleting.value,
                   onPressed: controller.deleteAccount,
                 ),
@@ -271,7 +294,14 @@ class PrivacyView extends GetView<PrivacyController> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: AppColors.secondaryAccent),
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: AppColors.softPinkSurface,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 18, color: AppColors.softRose),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -280,11 +310,18 @@ class PrivacyView extends GetView<PrivacyController> {
               Text(
                 title,
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.primaryText,
+                  color: AppColors.mainText,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 2),
-              Text(desc, style: AppTypography.bodySmall),
+              Text(
+                desc,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.secondaryTextCol,
+                  height: 1.35,
+                ),
+              ),
             ],
           ),
         ),

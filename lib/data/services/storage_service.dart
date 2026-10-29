@@ -23,9 +23,9 @@ class StorageService {
     await _prefs.setBool(AppConstants.keyHasCompletedOnboarding, value);
   }
 
-  // Location sharing preference
+  // Location sharing preference (defaults to true for couples live sharing app)
   bool get isSharingLocation =>
-      _prefs.getBool(AppConstants.keyIsSharingLocation) ?? false;
+      _prefs.getBool(AppConstants.keyIsSharingLocation) ?? true;
 
   Future<void> setSharingLocation(bool value) async {
     await _prefs.setBool(AppConstants.keyIsSharingLocation, value);

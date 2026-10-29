@@ -22,11 +22,15 @@ class InvitePartnerView extends GetView<PartnerController> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       appBar: AppBar(
-        title: Text('Invite Partner', style: AppTypography.titleMedium),
+        title: Text(
+          'Invite Partner',
+          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w700),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: AppColors.mainText,
           onPressed: () => Get.back(),
         ),
       ),
@@ -39,13 +43,17 @@ class InvitePartnerView extends GetView<PartnerController> {
               const SizedBox(height: 12),
               Text(
                 'Share Your Pairing Code',
-                style: AppTypography.displayMedium,
+                style: AppTypography.displayMedium.copyWith(
+                  color: AppColors.mainText,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'Send this single-use 6-digit code to your partner. It remains valid for 24 hours.',
-                style: AppTypography.bodyMedium,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.secondaryTextCol,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 36),
@@ -57,10 +65,10 @@ class InvitePartnerView extends GetView<PartnerController> {
 
                 if (isLoading) {
                   return Container(
-                    height: 120,
+                    height: 140,
                     alignment: Alignment.center,
                     child: const CircularProgressIndicator(
-                      color: AppColors.primaryAccent,
+                      color: AppColors.softRose,
                     ),
                   );
                 }
@@ -69,7 +77,7 @@ class InvitePartnerView extends GetView<PartnerController> {
 
                 return AppCard(
                   hasGlow: true,
-                  borderColor: AppColors.primaryAccent.withValues(alpha: 0.6),
+                  borderColor: AppColors.primaryRomanticBlush.withValues(alpha: 0.6),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 28,
@@ -79,8 +87,9 @@ class InvitePartnerView extends GetView<PartnerController> {
                       Text(
                         'PAIRING CODE',
                         style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.secondaryText,
+                          color: AppColors.secondaryTextCol,
                           letterSpacing: 2,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -88,9 +97,9 @@ class InvitePartnerView extends GetView<PartnerController> {
                         code,
                         style: AppTypography.displayLarge.copyWith(
                           fontSize: 42,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w900,
                           letterSpacing: 10,
-                          color: AppColors.primaryAccent,
+                          color: AppColors.deepRomanticPlum,
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -100,12 +109,14 @@ class InvitePartnerView extends GetView<PartnerController> {
                           const Icon(
                             Icons.timer_outlined,
                             size: 14,
-                            color: AppColors.tertiaryText,
+                            color: AppColors.secondaryTextCol,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             'Expires in 24 hours',
-                            style: AppTypography.bodySmall,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.secondaryTextCol,
+                            ),
                           ),
                         ],
                       ),
@@ -122,7 +133,7 @@ class InvitePartnerView extends GetView<PartnerController> {
                     child: AppButton(
                       text: 'Copy Code',
                       variant: AppButtonVariant.secondary,
-                      leadingIcon: Icons.copy,
+                      leadingIcon: Icons.copy_rounded,
                       onPressed: () {
                         final code = controller.activeInvite.value?.code;
                         if (code != null) {
@@ -141,7 +152,7 @@ class InvitePartnerView extends GetView<PartnerController> {
                     child: AppButton(
                       text: 'Share Invite',
                       variant: AppButtonVariant.primary,
-                      leadingIcon: Icons.share,
+                      leadingIcon: Icons.share_rounded,
                       onPressed: controller.shareInviteCode,
                     ),
                   ),
@@ -151,35 +162,36 @@ class InvitePartnerView extends GetView<PartnerController> {
               TextButton.icon(
                 onPressed: controller.generateNewInviteCode,
                 icon: const Icon(
-                  Icons.refresh,
+                  Icons.refresh_rounded,
                   size: 16,
-                  color: AppColors.secondaryText,
+                  color: AppColors.softRose,
                 ),
                 label: Text(
                   'Generate a new code',
                   style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.secondaryText,
+                    color: AppColors.softRose,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
               const Spacer(),
               // Instruction step indicators
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryBackground,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
+                  color: AppColors.softPinkSurface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.subtleBorders),
                 ),
                 child: Column(
                   children: [
-                    _buildStepRow('1', 'Your partner installs Pairly'),
+                    _buildStepRow('1', 'Your partner opens Pairly'),
                     const SizedBox(height: 10),
                     _buildStepRow('2', 'They select "Enter Partner\'s Code"'),
                     const SizedBox(height: 10),
                     _buildStepRow(
                       '3',
-                      'Once matched, you both can enable sharing',
+                      'Once matched, both can share live location',
                     ),
                   ],
                 ),
@@ -196,19 +208,19 @@ class InvitePartnerView extends GetView<PartnerController> {
     return Row(
       children: [
         Container(
-          width: 22,
-          height: 22,
+          width: 24,
+          height: 24,
           decoration: BoxDecoration(
-            color: AppColors.cardSubtle,
+            color: AppColors.whiteCards,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.primaryRomanticBlush.withValues(alpha: 0.5)),
           ),
           alignment: Alignment.center,
           child: Text(
             step,
             style: AppTypography.labelSmall.copyWith(
-              color: AppColors.primaryAccent,
-              fontWeight: FontWeight.w700,
+              color: AppColors.softRose,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
@@ -217,7 +229,8 @@ class InvitePartnerView extends GetView<PartnerController> {
           child: Text(
             text,
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.primaryText,
+              color: AppColors.mainText,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),

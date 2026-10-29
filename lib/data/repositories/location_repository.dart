@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/location_data_model.dart';
 import '../services/storage_service.dart';
@@ -33,6 +34,9 @@ class LocationRepository {
   StreamSubscription? _partnerLocSubscription;
   Timer? _partnerPollTimer;
 
+  LocationDataModel? _pendingUploadModel;
+  DateTime? _lastUploadedAt;
+
   LocationRepository({
     required this.supabaseService,
     required this.storageService,
@@ -60,10 +64,27 @@ class LocationRepository {
     _currentUserLocation = model;
     _userLocationController.add(model);
 
+    // Throttle identical stationary uploads if less than 5s apart to save battery & bandwidth
+    if (_lastUploadedAt != null &&
+        now.difference(_lastUploadedAt!).inSeconds < 5 &&
+        _pendingUploadModel == null) {
+      return;
+    }
+
     if (supabaseService.isConfigured && supabaseService.client != null) {
       try {
-        await supabaseService.client!.from('locations').upsert(model.toJson());
-      } catch (_) {}
+        await supabaseService.client!.from('locations').upsert(
+              model.toJson(),
+              onConflict: 'uid',
+            );
+        _lastUploadedAt = now;
+        _pendingUploadModel = null;
+      } catch (e) {
+        debugPrint('[LocationRepository] updateCurrentLocation error: $e');
+        _pendingUploadModel = model;
+      }
+    } else {
+      _pendingUploadModel = model;
     }
   }
 
@@ -88,7 +109,9 @@ class LocationRepository {
               'updatedAt': DateTime.now().toIso8601String(),
             })
             .eq('uid', uid);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[LocationRepository] setSharingStatus error: $e');
+      }
     }
   }
 
@@ -109,8 +132,8 @@ class LocationRepository {
       // 1. Initial immediate fetch
       _fetchInitialPartnerLocation(partnerUid);
 
-      // 2. Continuous fallback polling every 4 seconds for reliable delivery over mobile networks
-      _partnerPollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      // 2. High-reliability fallback polling timer (3s) ensures updates arrive even when mobile websockets drop
+      _partnerPollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
         _fetchInitialPartnerLocation(partnerUid);
       });
 
@@ -120,34 +143,27 @@ class LocationRepository {
             .from('locations')
             .stream(primaryKey: ['uid'])
             .eq('uid', partnerUid)
-            .listen((List<Map<String, dynamic>> records) {
-              if (records.isNotEmpty) {
-                final loc = LocationDataModel.fromJson(records.first);
-                _partnerLocation = loc;
-                _isPartnerSharing = loc.isSharing;
-                _partnerLocationController.add(loc);
-                _partnerSharingController.add(loc.isSharing);
-              }
-            });
-      } catch (_) {
+            .listen(
+              (List<Map<String, dynamic>> records) {
+                if (records.isNotEmpty) {
+                  final loc = LocationDataModel.fromJson(records.first);
+                  _applyPartnerLocationUpdate(loc);
+                }
+              },
+              onError: (err) {
+                debugPrint('[LocationRepository] Partner stream error: $err');
+                _fetchInitialPartnerLocation(partnerUid);
+              },
+            );
+      } catch (e) {
+        debugPrint('[LocationRepository] Stream listener setup error: $e');
         _fetchInitialPartnerLocation(partnerUid);
       }
     } else {
-      // Local fallback mode: simulated partner location nearby
-      _isPartnerSharing = true;
-      _partnerSharingController.add(true);
-
-      final now = DateTime.now();
-      final simulated = LocationDataModel(
-        uid: partnerUid,
-        latitude: 37.7833,
-        longitude: -122.4167,
-        accuracy: 12.0,
-        updatedAt: now.subtract(const Duration(minutes: 2)),
-        isSharing: true,
-      );
-      _partnerLocation = simulated;
-      _partnerLocationController.add(simulated);
+      _partnerLocation = null;
+      _partnerLocationController.add(null);
+      _isPartnerSharing = false;
+      _partnerSharingController.add(false);
     }
   }
 
@@ -162,12 +178,31 @@ class LocationRepository {
 
       if (res != null) {
         final loc = LocationDataModel.fromJson(Map<String, dynamic>.from(res));
-        _partnerLocation = loc;
-        _isPartnerSharing = loc.isSharing;
-        _partnerLocationController.add(loc);
-        _partnerSharingController.add(loc.isSharing);
+        _applyPartnerLocationUpdate(loc);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[LocationRepository] fetchPartnerLocation error: $e');
+    }
+  }
+
+  void _applyPartnerLocationUpdate(LocationDataModel newLoc) {
+    // 1. Reject out-of-order older packets
+    if (_partnerLocation != null &&
+        newLoc.updatedAt.isBefore(_partnerLocation!.updatedAt)) {
+      return;
+    }
+
+    // 2. Accept update if newer or sharing status changed
+    if (_partnerLocation == null ||
+        newLoc.updatedAt.isAfter(_partnerLocation!.updatedAt) ||
+        newLoc.latitude != _partnerLocation!.latitude ||
+        newLoc.longitude != _partnerLocation!.longitude ||
+        newLoc.isSharing != _isPartnerSharing) {
+      _partnerLocation = newLoc;
+      _isPartnerSharing = newLoc.isSharing;
+      _partnerLocationController.add(newLoc);
+      _partnerSharingController.add(newLoc.isSharing);
+    }
   }
 
   void stopListeningPartner() {

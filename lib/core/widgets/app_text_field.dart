@@ -49,7 +49,7 @@ class AppTextField extends StatelessWidget {
           Text(
             label!,
             style: AppTypography.labelMedium.copyWith(
-              color: AppColors.primaryText,
+              color: AppColors.mainText,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -67,11 +67,11 @@ class AppTextField extends StatelessWidget {
           enabled: enabled,
           maxLines: maxLines,
           textCapitalization: textCapitalization,
-          style: AppTypography.bodyLarge.copyWith(color: AppColors.primaryText),
+          style: AppTypography.bodyLarge.copyWith(color: AppColors.mainText),
           decoration: InputDecoration(
             hintText: hintText,
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.secondaryText, size: 20)
+                ? Icon(prefixIcon, color: AppColors.secondaryTextCol, size: 20)
                 : null,
             suffixIcon: suffixIcon,
           ),

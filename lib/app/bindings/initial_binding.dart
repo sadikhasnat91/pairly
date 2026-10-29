@@ -3,9 +3,12 @@ import 'package:get/get.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/location_repository.dart';
 import '../../data/repositories/partner_repository.dart';
+import '../../data/repositories/safe_arrival_repository.dart';
+import '../../data/repositories/video_signaling_repository.dart';
 import '../../data/services/location_service.dart';
 import '../../data/services/storage_service.dart';
 import '../../data/services/supabase_service.dart';
+import '../../data/services/video_call_service.dart';
 import '../../modules/auth/controllers/auth_controller.dart';
 import '../../modules/auth/controllers/forgot_password_controller.dart';
 import '../../modules/auth/controllers/register_controller.dart';
@@ -19,12 +22,14 @@ import '../../modules/privacy/controllers/privacy_controller.dart';
 import '../../modules/profile/controllers/profile_controller.dart';
 import '../../modules/safe_arrival/controllers/safe_arrival_controller.dart';
 import '../../modules/splash/controllers/splash_controller.dart';
+import '../../modules/video_call/controllers/video_call_controller.dart';
 
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
     // Services
     Get.lazyPut<LocationService>(() => LocationService(), fenix: true);
+    Get.lazyPut<VideoCallService>(() => VideoCallService(), fenix: true);
 
     // Repositories (dependencies on SupabaseService & StorageService registered in main())
     Get.lazyPut<AuthRepository>(
@@ -47,6 +52,21 @@ class InitialBinding extends Bindings {
       () => LocationRepository(
         supabaseService: Get.find<SupabaseService>(),
         storageService: Get.find<StorageService>(),
+      ),
+      fenix: true,
+    );
+
+    Get.lazyPut<SafeArrivalRepository>(
+      () => SafeArrivalRepository(
+        supabaseService: Get.find<SupabaseService>(),
+        storageService: Get.find<StorageService>(),
+      ),
+      fenix: true,
+    );
+
+    Get.lazyPut<VideoSignalingRepository>(
+      () => VideoSignalingRepository(
+        supabaseService: Get.find<SupabaseService>(),
       ),
       fenix: true,
     );
@@ -75,6 +95,10 @@ class InitialBinding extends Bindings {
     Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
     Get.lazyPut<SafeArrivalController>(
       () => SafeArrivalController(),
+      fenix: true,
+    );
+    Get.lazyPut<VideoCallController>(
+      () => VideoCallController(),
       fenix: true,
     );
   }

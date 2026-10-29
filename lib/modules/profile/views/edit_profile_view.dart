@@ -14,11 +14,15 @@ class EditProfileView extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       appBar: AppBar(
-        title: Text('Edit Profile', style: AppTypography.titleMedium),
+        title: Text(
+          'Edit Profile',
+          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w700),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: AppColors.mainText,
           onPressed: () => Get.back(),
         ),
       ),
@@ -39,8 +43,8 @@ class EditProfileView extends GetView<ProfileController> {
               AppTextField(
                 controller: controller.statusController,
                 label: 'Status Message',
-                hintText: 'e.g. On my way, In a meeting',
-                prefixIcon: Icons.edit_note_outlined,
+                hintText: 'e.g. Thinking of you, At home',
+                prefixIcon: Icons.edit_note_rounded,
               ),
               const SizedBox(height: 36),
               Obx(

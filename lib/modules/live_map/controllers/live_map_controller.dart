@@ -7,6 +7,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/location_utils.dart';
 import '../../../data/models/location_data_model.dart';
 import '../../../data/models/user_model.dart';
@@ -121,7 +122,9 @@ class LiveMapController extends GetxController {
     isMapLoading.value = false;
     _updateMapEntities();
     fetchCurrentLocation();
-    fitBothMarkers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fitBothMarkers();
+    });
   }
 
   Future<void> _updateMapEntities() async {
@@ -191,7 +194,9 @@ class LiveMapController extends GetxController {
           zIndexInt: 3,
           infoWindow: InfoWindow(
             title: pUser?.displayName ?? 'Partner',
-            snippet: isFresh ? 'Live location' : 'Outdated location',
+            snippet: isFresh
+                ? 'Live: updated ${DateFormatter.timeAgo(pLoc.updatedAt)}'
+                : 'Stale: last seen ${DateFormatter.timeAgo(pLoc.updatedAt)}',
           ),
         ),
       );
@@ -233,55 +238,59 @@ class LiveMapController extends GetxController {
     required Color borderColor,
     required Color fillColor,
   }) async {
-    const size = 110.0;
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, size, size));
+    try {
+      const size = 110.0;
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, size, size));
 
-    // Outer glow / shadow
-    final shadowPaint = Paint()
-      ..color = borderColor.withValues(alpha: 0.3)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    canvas.drawCircle(const Offset(size / 2, size / 2), 44, shadowPaint);
+      // Outer glow / shadow
+      final shadowPaint = Paint()
+        ..color = borderColor.withValues(alpha: 0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      canvas.drawCircle(const Offset(size / 2, size / 2), 44, shadowPaint);
 
-    // Background circle
-    final bgPaint = Paint()
-      ..color = fillColor
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(const Offset(size / 2, size / 2), 40, bgPaint);
+      // Background circle
+      final bgPaint = Paint()
+        ..color = fillColor
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(const Offset(size / 2, size / 2), 40, bgPaint);
 
-    // Border ring
-    final borderPaint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0;
-    canvas.drawCircle(const Offset(size / 2, size / 2), 40, borderPaint);
+      // Border ring
+      final borderPaint = Paint()
+        ..color = borderColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6.0;
+      canvas.drawCircle(const Offset(size / 2, size / 2), 40, borderPaint);
 
-    // Text label (Initial)
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: TextStyle(
-          color: borderColor,
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
+      // Text label (Initial)
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            color: borderColor,
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset((size - textPainter.width) / 2, (size - textPainter.height) / 2),
-    );
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset((size - textPainter.width) / 2, (size - textPainter.height) / 2),
+      );
 
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(size.toInt(), size.toInt());
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      final picture = recorder.endRecording();
+      final image = await picture.toImage(size.toInt(), size.toInt());
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
 
-    if (bytes == null) {
-      return BitmapDescriptor.defaultMarker;
+      if (bytes == null) {
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRose);
+      }
+      return BitmapDescriptor.bytes(bytes.buffer.asUint8List());
+    } catch (_) {
+      return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRose);
     }
-    return BitmapDescriptor.bytes(bytes.buffer.asUint8List());
   }
 
   /// Recenter camera on user's location
@@ -322,11 +331,15 @@ class LiveMapController extends GetxController {
     if (mapController == null) return;
 
     if (uLoc != null && pLoc != null && (isPartnerSharing.value || pLoc.isSharing)) {
-      final bounds = LocationUtils.createBounds(
-        LatLng(uLoc.latitude, uLoc.longitude),
-        LatLng(pLoc.latitude, pLoc.longitude),
-      );
-      mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
+      try {
+        final bounds = LocationUtils.createBounds(
+          LatLng(uLoc.latitude, uLoc.longitude),
+          LatLng(pLoc.latitude, pLoc.longitude),
+        );
+        mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
+      } catch (_) {
+        recenterUser();
+      }
     } else if (uLoc != null) {
       recenterUser();
     } else if (pLoc != null) {

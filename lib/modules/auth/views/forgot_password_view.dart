@@ -14,10 +14,11 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: AppColors.mainText,
           onPressed: () => Get.back(),
         ),
       ),
@@ -27,18 +28,25 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Reset Password', style: AppTypography.displayMedium),
+              Text(
+                'Reset Password',
+                style: AppTypography.displayMedium.copyWith(
+                  color: AppColors.mainText,
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
                 'Enter your account email and we\'ll send a secure password reset link.',
-                style: AppTypography.bodyMedium,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.secondaryTextCol,
+                ),
               ),
               const SizedBox(height: 32),
               AppTextField(
                 controller: controller.emailController,
                 label: 'Email Address',
                 hintText: 'name@example.com',
-                prefixIcon: Icons.email_outlined,
+                prefixIcon: Icons.mail_outline_rounded,
                 keyboardType: TextInputType.emailAddress,
                 validator: Validators.validateEmail,
               ),

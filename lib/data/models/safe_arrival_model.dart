@@ -1,72 +1,132 @@
-class SafeArrivalDestination {
-  final String id;
-  final String title;
-  final double latitude;
-  final double longitude;
-  final double radiusMeters;
+class SafeArrivalSettingsModel {
+  final String? id;
+  final String userId;
+  final double homeLatitude;
+  final double homeLongitude;
+  final String? homeAddress;
+  final double geofenceRadiusMeters;
   final bool isEnabled;
-  final bool hasNotified;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
-  const SafeArrivalDestination({
-    required this.id,
-    required this.title,
-    required this.latitude,
-    required this.longitude,
-    this.radiusMeters = 100.0,
+  const SafeArrivalSettingsModel({
+    this.id,
+    required this.userId,
+    required this.homeLatitude,
+    required this.homeLongitude,
+    this.homeAddress,
+    this.geofenceRadiusMeters = 150.0,
     this.isEnabled = true,
-    this.hasNotified = false,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  SafeArrivalDestination copyWith({
+  SafeArrivalSettingsModel copyWith({
     String? id,
-    String? title,
-    double? latitude,
-    double? longitude,
-    double? radiusMeters,
+    String? userId,
+    double? homeLatitude,
+    double? homeLongitude,
+    String? homeAddress,
+    double? geofenceRadiusMeters,
     bool? isEnabled,
-    bool? hasNotified,
+    DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return SafeArrivalDestination(
+    return SafeArrivalSettingsModel(
       id: id ?? this.id,
-      title: title ?? this.title,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-      radiusMeters: radiusMeters ?? this.radiusMeters,
+      userId: userId ?? this.userId,
+      homeLatitude: homeLatitude ?? this.homeLatitude,
+      homeLongitude: homeLongitude ?? this.homeLongitude,
+      homeAddress: homeAddress ?? this.homeAddress,
+      geofenceRadiusMeters: geofenceRadiusMeters ?? this.geofenceRadiusMeters,
       isEnabled: isEnabled ?? this.isEnabled,
-      hasNotified: hasNotified ?? this.hasNotified,
+      createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'title': title,
-      'latitude': latitude,
-      'longitude': longitude,
-      'radiusMeters': radiusMeters,
-      'isEnabled': isEnabled,
-      'hasNotified': hasNotified,
-      'updatedAt': updatedAt.toIso8601String(),
+      if (id != null) 'id': id,
+      'user_id': userId,
+      'home_latitude': homeLatitude,
+      'home_longitude': homeLongitude,
+      'home_address': homeAddress,
+      'geofence_radius_meters': geofenceRadiusMeters,
+      'enabled': isEnabled,
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
     };
   }
 
-  factory SafeArrivalDestination.fromJson(Map<String, dynamic> json) {
-    return SafeArrivalDestination(
-      id: json['id'] as String? ?? '',
-      title: json['title'] as String? ?? '',
-      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
-      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-      radiusMeters: (json['radiusMeters'] as num?)?.toDouble() ?? 100.0,
-      isEnabled: json['isEnabled'] as bool? ?? true,
-      hasNotified: json['hasNotified'] as bool? ?? false,
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
+  factory SafeArrivalSettingsModel.fromJson(Map<String, dynamic> json) {
+    return SafeArrivalSettingsModel(
+      id: json['id'] as String?,
+      userId: json['user_id'] as String? ?? '',
+      homeLatitude: (json['home_latitude'] as num?)?.toDouble() ?? 0.0,
+      homeLongitude: (json['home_longitude'] as num?)?.toDouble() ?? 0.0,
+      homeAddress: json['home_address'] as String?,
+      geofenceRadiusMeters:
+          (json['geofence_radius_meters'] as num?)?.toDouble() ?? 150.0,
+      isEnabled: json['enabled'] as bool? ?? true,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString())
+          : null,
     );
   }
 }
 
+class SafeArrivalEventModel {
+  final String? id;
+  final String userId;
+  final String? connectionId;
+  final String eventType;
+  final DateTime eventTimestamp;
+  final String idempotencyKey;
+  final String processingStatus;
+  final DateTime? createdAt;
+
+  const SafeArrivalEventModel({
+    this.id,
+    required this.userId,
+    this.connectionId,
+    this.eventType = 'arrival',
+    required this.eventTimestamp,
+    required this.idempotencyKey,
+    this.processingStatus = 'pending',
+    this.createdAt,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'user_id': userId,
+      if (connectionId != null) 'connection_id': connectionId,
+      'event_type': eventType,
+      'event_timestamp': eventTimestamp.toIso8601String(),
+      'idempotency_key': idempotencyKey,
+      'processing_status': processingStatus,
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
+    };
+  }
+
+  factory SafeArrivalEventModel.fromJson(Map<String, dynamic> json) {
+    return SafeArrivalEventModel(
+      id: json['id'] as String?,
+      userId: json['user_id'] as String? ?? '',
+      connectionId: json['connection_id'] as String?,
+      eventType: json['event_type'] as String? ?? 'arrival',
+      eventTimestamp: json['event_timestamp'] != null
+          ? DateTime.tryParse(json['event_timestamp'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      idempotencyKey: json['idempotency_key'] as String? ?? '',
+      processingStatus: json['processing_status'] as String? ?? 'pending',
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+    );
+  }
+}

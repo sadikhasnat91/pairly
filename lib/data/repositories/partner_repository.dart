@@ -332,6 +332,13 @@ class PartnerRepository {
     _connectionController.add(null);
   }
 
+  void stopListening() {
+    _connectionSubscription?.cancel();
+    _currentConnection = null;
+    _partnerUser = null;
+    _connectionController.add(null);
+  }
+
   void dispose() {
     _connectionSubscription?.cancel();
     _connectionController.close();

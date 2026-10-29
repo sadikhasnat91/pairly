@@ -12,6 +12,8 @@ import '../../modules/privacy/views/privacy_view.dart';
 import '../../modules/profile/views/edit_profile_view.dart';
 import '../../modules/safe_arrival/views/safe_arrival_view.dart';
 import '../../modules/splash/views/splash_view.dart';
+import '../../modules/video_call/views/camera_sharing_settings_view.dart';
+import '../../modules/video_call/views/video_call_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -79,6 +81,16 @@ class AppPages {
       name: AppRoutes.privacy,
       page: () => const PrivacyView(),
       transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.cameraSettings,
+      page: () => const CameraSharingSettingsView(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.videoCall,
+      page: () => const VideoCallView(),
+      transition: Transition.fadeIn,
     ),
   ];
 }

@@ -33,10 +33,10 @@ class PartnerAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = isLive
-        ? AppColors.primaryAccent
+        ? AppColors.softRose
         : isSharing
-        ? AppColors.secondaryAccent
-        : AppColors.border;
+        ? AppColors.primaryRomanticBlush
+        : AppColors.subtleBorders;
 
     return GestureDetector(
       onTap: onTap,
@@ -48,16 +48,25 @@ class PartnerAvatar extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: borderColor, width: isLive ? 2.5 : 1.5),
+              border: Border.all(
+                color: borderColor,
+                width: isLive ? 2.5 : 1.5,
+              ),
               boxShadow: isLive
                   ? [
                       BoxShadow(
-                        color: AppColors.primaryAccent.withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        spreadRadius: 1,
+                        color: AppColors.primaryRomanticBlush.withValues(alpha: 0.4),
+                        blurRadius: 14,
+                        spreadRadius: 2,
                       ),
                     ]
-                  : null,
+                  : [
+                      BoxShadow(
+                        color: AppColors.deepRomanticPlum.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
             ),
             child: ClipOval(
               child: photoUrl != null && photoUrl!.isNotEmpty
@@ -74,15 +83,26 @@ class PartnerAvatar extends StatelessWidget {
               right: 0,
               bottom: 0,
               child: Container(
-                width: size * 0.28,
-                height: size * 0.28,
+                width: size * 0.32,
+                height: size * 0.32,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryAccent,
+                  color: AppColors.successAccent,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.primaryBackground,
+                    color: AppColors.whiteCards,
                     width: 2,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.successAccent.withValues(alpha: 0.4),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.favorite,
+                  size: 10,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -93,14 +113,14 @@ class PartnerAvatar extends StatelessWidget {
 
   Widget _buildFallback() {
     return Container(
-      color: AppColors.cardSubtle,
+      color: AppColors.softPinkSurface,
       alignment: Alignment.center,
       child: Text(
         initials,
         style: AppTypography.titleMedium.copyWith(
-          color: isLive ? AppColors.primaryAccent : AppColors.primaryText,
-          fontSize: size * 0.38,
+          color: AppColors.deepRomanticPlum,
           fontWeight: FontWeight.w700,
+          fontSize: size * 0.36,
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -14,10 +15,11 @@ class RegisterView extends GetView<RegisterController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: AppColors.mainText,
           onPressed: () => Get.back(),
         ),
       ),
@@ -27,21 +29,48 @@ class RegisterView extends GetView<RegisterController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Small branding icon
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryRomanticBlush.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               Text(
                 'Create Account',
-                style: AppTypography.displayMedium,
+                style: AppTypography.displayMedium.copyWith(
+                  color: AppColors.mainText,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Start sharing and staying connected with your partner.',
-                style: AppTypography.bodyMedium,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.secondaryTextCol,
+                ),
               ),
               const SizedBox(height: 32),
               AppTextField(
                 controller: controller.emailController,
                 label: 'Email Address',
                 hintText: 'name@example.com',
-                prefixIcon: Icons.email_outlined,
+                prefixIcon: Icons.mail_outline_rounded,
                 keyboardType: TextInputType.emailAddress,
                 validator: Validators.validateEmail,
               ),
@@ -51,14 +80,14 @@ class RegisterView extends GetView<RegisterController> {
                   controller: controller.passwordController,
                   label: 'Password',
                   hintText: 'Minimum 6 characters',
-                  prefixIcon: Icons.lock_outline,
+                  prefixIcon: Icons.lock_outline_rounded,
                   obscureText: !controller.isPasswordVisible.value,
                   suffixIcon: IconButton(
                     icon: Icon(
                       controller.isPasswordVisible.value
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: AppColors.secondaryText,
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
+                      color: AppColors.secondaryTextCol,
                       size: 20,
                     ),
                     onPressed: controller.togglePasswordVisibility,
@@ -72,14 +101,14 @@ class RegisterView extends GetView<RegisterController> {
                   controller: controller.confirmPasswordController,
                   label: 'Confirm Password',
                   hintText: 'Re-enter your password',
-                  prefixIcon: Icons.lock_outline,
+                  prefixIcon: Icons.lock_outline_rounded,
                   obscureText: !controller.isConfirmPasswordVisible.value,
                   suffixIcon: IconButton(
                     icon: Icon(
                       controller.isConfirmPasswordVisible.value
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: AppColors.secondaryText,
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
+                      color: AppColors.secondaryTextCol,
                       size: 20,
                     ),
                     onPressed: controller.toggleConfirmPasswordVisibility,
@@ -105,14 +134,16 @@ class RegisterView extends GetView<RegisterController> {
                 children: [
                   Text(
                     'Already have an account?',
-                    style: AppTypography.bodyMedium,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.secondaryTextCol,
+                    ),
                   ),
                   TextButton(
                     onPressed: () => Get.offNamed(AppRoutes.login),
                     child: Text(
                       'Sign In',
-                      style: AppTypography.labelMedium.copyWith(
-                        color: AppColors.primaryAccent,
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.softRose,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

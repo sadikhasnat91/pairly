@@ -14,14 +14,14 @@ class AppDialog {
     String confirmText = 'Confirm',
     String cancelText = 'Cancel',
     bool isDanger = false,
-    IconData icon = Icons.warning_amber_rounded,
+    IconData icon = Icons.favorite_border_rounded,
   }) {
     return Get.dialog<bool>(
       Dialog(
-        backgroundColor: AppColors.elevatedCard,
+        backgroundColor: AppColors.whiteCards,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: AppColors.border),
+          side: const BorderSide(color: AppColors.subtleBorders),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -29,30 +29,35 @@ class AppDialog {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 58,
+                height: 58,
                 decoration: BoxDecoration(
                   color: isDanger
                       ? AppColors.errorBackground
-                      : AppColors.warningBackground,
+                      : AppColors.softPinkSurface,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
-                  color: isDanger ? AppColors.error : AppColors.warning,
+                  color: isDanger ? AppColors.errorAccent : AppColors.softRose,
                   size: 28,
                 ),
               ),
               const SizedBox(height: 18),
               Text(
                 title,
-                style: AppTypography.titleLarge,
+                style: AppTypography.titleLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.mainText,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               Text(
                 description,
-                style: AppTypography.bodyMedium,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.secondaryTextCol,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -88,14 +93,14 @@ class AppDialog {
     required String title,
     required String message,
     String buttonText = 'Understood',
-    IconData icon = Icons.info_outline,
+    IconData icon = Icons.favorite_rounded,
   }) {
     Get.dialog(
       Dialog(
-        backgroundColor: AppColors.elevatedCard,
+        backgroundColor: AppColors.whiteCards,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: AppColors.border),
+          side: const BorderSide(color: AppColors.subtleBorders),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -103,27 +108,32 @@ class AppDialog {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 50,
-                height: 50,
+                width: 54,
+                height: 54,
                 decoration: const BoxDecoration(
-                  color: AppColors.infoBackground,
+                  color: AppColors.softPinkSurface,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: AppColors.info, size: 26),
+                child: Icon(icon, color: AppColors.softRose, size: 26),
               ),
               const SizedBox(height: 16),
               Text(
                 title,
-                style: AppTypography.titleLarge,
+                style: AppTypography.titleLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.mainText,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               Text(
                 message,
-                style: AppTypography.bodyMedium,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.secondaryTextCol,
+                ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
               AppButton(
                 text: buttonText,
                 variant: AppButtonVariant.primary,

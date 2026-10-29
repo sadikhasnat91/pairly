@@ -16,9 +16,12 @@ class ProfileView extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       appBar: AppBar(
-        title: Text('Account & Profile', style: AppTypography.titleMedium),
+        title: Text(
+          'Account & Profile',
+          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w700),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -46,28 +49,35 @@ class ProfileView extends GetView<ProfileController> {
                           children: [
                             Text(
                               user?.displayName ?? 'User',
-                              style: AppTypography.titleMedium,
+                              style: AppTypography.titleMedium.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               user?.email ?? '',
-                              style: AppTypography.bodySmall,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.secondaryTextCol,
+                              ),
                             ),
                             if (user?.statusMessage?.isNotEmpty == true) ...[
                               const SizedBox(height: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
+                                  horizontal: 10,
+                                  vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.cardSubtle,
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: AppColors.softPinkSurface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.primaryRomanticBlush.withValues(alpha: 0.3),
+                                  ),
                                 ),
                                 child: Text(
                                   '"${user!.statusMessage!}"',
                                   style: AppTypography.labelSmall.copyWith(
-                                    color: AppColors.primaryAccent,
+                                    color: AppColors.softRose,
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
@@ -77,9 +87,17 @@ class ProfileView extends GetView<ProfileController> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
-                          Icons.edit_outlined,
-                          color: AppColors.primaryAccent,
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.softPinkSurface,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: AppColors.softRose,
+                          ),
                         ),
                         onPressed: () => Get.toNamed(AppRoutes.editProfile),
                       ),
@@ -95,10 +113,24 @@ class ProfileView extends GetView<ProfileController> {
                 child: Column(
                   children: [
                     _buildSettingsTile(
-                      icon: Icons.person_outline,
+                      icon: Icons.person_outline_rounded,
                       title: 'Edit Profile Information',
-                      subtitle: 'Name, status, avatar',
+                      subtitle: 'Name, status message, avatar',
                       onTap: () => Get.toNamed(AppRoutes.editProfile),
+                    ),
+                    const Divider(height: 1),
+                    _buildSettingsTile(
+                      icon: Icons.notifications_active_outlined,
+                      title: 'Safe Arrival Alerts',
+                      subtitle: 'Home geofence & arrival notifications',
+                      onTap: () => Get.toNamed(AppRoutes.safeArrival),
+                    ),
+                    const Divider(height: 1),
+                    _buildSettingsTile(
+                      icon: Icons.videocam_outlined,
+                      title: 'Live Camera & Video',
+                      subtitle: 'Consent-based remote video permissions',
+                      onTap: () => Get.toNamed(AppRoutes.cameraSettings),
                     ),
                     const Divider(height: 1),
                     _buildSettingsTile(
@@ -109,20 +141,20 @@ class ProfileView extends GetView<ProfileController> {
                     ),
                     const Divider(height: 1),
                     _buildSettingsTile(
-                      icon: Icons.lock_reset,
+                      icon: Icons.lock_reset_rounded,
                       title: 'Change Password',
                       subtitle: 'Send reset link to your email',
                       onTap: controller.requestPasswordReset,
                     ),
                     const Divider(height: 1),
                     _buildSettingsTile(
-                      icon: Icons.info_outline,
+                      icon: Icons.favorite_border_rounded,
                       title: 'About Pairly',
                       subtitle: 'Version ${AppConstants.appVersion}',
                       onTap: () {
                         Get.snackbar(
                           'Pairly v${AppConstants.appVersion}',
-                          'Built with Flutter, GetX, Google Maps & Firebase.',
+                          'Closer, Wherever You Are. Designed with love.',
                           snackPosition: SnackPosition.BOTTOM,
                         );
                       },
@@ -136,7 +168,7 @@ class ProfileView extends GetView<ProfileController> {
               AppButton(
                 text: 'Sign Out',
                 variant: AppButtonVariant.secondary,
-                leadingIcon: Icons.logout,
+                leadingIcon: Icons.logout_rounded,
                 onPressed: controller.signOut,
               ),
               const SizedBox(height: 20),
@@ -156,19 +188,25 @@ class ProfileView extends GetView<ProfileController> {
     return ListTile(
       onTap: onTap,
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(9),
         decoration: BoxDecoration(
-          color: AppColors.secondaryBackground,
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.softPinkSurface,
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: AppColors.primaryAccent, size: 20),
+        child: Icon(icon, color: AppColors.softRose, size: 20),
       ),
-      title: Text(title, style: AppTypography.labelLarge),
-      subtitle: Text(subtitle, style: AppTypography.bodySmall),
+      title: Text(
+        title,
+        style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: AppTypography.bodySmall.copyWith(color: AppColors.secondaryTextCol),
+      ),
       trailing: const Icon(
-        Icons.arrow_forward_ios,
+        Icons.arrow_forward_ios_rounded,
         size: 14,
-        color: AppColors.secondaryText,
+        color: AppColors.secondaryTextCol,
       ),
     );
   }

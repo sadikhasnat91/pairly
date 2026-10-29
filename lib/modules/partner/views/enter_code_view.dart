@@ -13,11 +13,15 @@ class EnterCodeView extends GetView<PartnerController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       appBar: AppBar(
-        title: Text('Enter Code', style: AppTypography.titleMedium),
+        title: Text(
+          'Enter Code',
+          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w700),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: AppColors.mainText,
           onPressed: () => Get.back(),
         ),
       ),
@@ -27,18 +31,25 @@ class EnterCodeView extends GetView<PartnerController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Enter Pairing Code', style: AppTypography.displayMedium),
+              Text(
+                'Enter Pairing Code',
+                style: AppTypography.displayMedium.copyWith(
+                  color: AppColors.mainText,
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
                 'Type the 6-character code given by your partner to establish your private connection.',
-                style: AppTypography.bodyMedium,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.secondaryTextCol,
+                ),
               ),
               const SizedBox(height: 36),
               AppTextField(
                 controller: controller.codeInputController,
                 label: 'Partner Code',
                 hintText: 'e.g. 7X9K2P',
-                prefixIcon: Icons.lock_open,
+                prefixIcon: Icons.favorite_border_rounded,
                 textCapitalization: TextCapitalization.characters,
               ),
               const SizedBox(height: 32),
@@ -52,24 +63,27 @@ class EnterCodeView extends GetView<PartnerController> {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryBackground,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
+                  color: AppColors.softPinkSurface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.subtleBorders),
                 ),
                 child: Row(
                   children: [
                     const Icon(
                       Icons.shield_outlined,
-                      color: AppColors.secondaryAccent,
+                      color: AppColors.softRose,
                       size: 22,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Connecting is 100% reciprocal. You can disconnect or pause location streaming at any time with one tap.',
-                        style: AppTypography.bodySmall,
+                        'Connecting is 100% mutual. You can disconnect or pause location streaming at any time with one tap.',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.secondaryTextCol,
+                          height: 1.35,
+                        ),
                       ),
                     ),
                   ],

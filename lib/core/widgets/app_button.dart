@@ -25,102 +25,115 @@ class AppButton extends StatelessWidget {
     this.leadingIcon,
     this.trailingIcon,
     this.width,
-    this.height = 52,
+    this.height = 54,
     this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
-    Color backgroundColor;
+    Color? backgroundColor;
+    Gradient? gradient;
     Color foregroundColor;
     BorderSide? borderSide;
+    List<BoxShadow>? boxShadow;
 
     switch (variant) {
       case AppButtonVariant.primary:
-        backgroundColor = AppColors.primaryAccent;
-        foregroundColor = AppColors.primaryBackground;
+        gradient = AppColors.blushGradient;
+        foregroundColor = Colors.white;
+        boxShadow = [
+          BoxShadow(
+            color: AppColors.primaryRomanticBlush.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ];
         break;
       case AppButtonVariant.secondary:
-        backgroundColor = AppColors.cardSubtle;
-        foregroundColor = AppColors.primaryText;
-        borderSide = const BorderSide(color: AppColors.border);
+        backgroundColor = AppColors.softPinkSurface;
+        foregroundColor = AppColors.deepRomanticPlum;
+        borderSide = const BorderSide(color: AppColors.subtleBorders, width: 1.2);
         break;
       case AppButtonVariant.outline:
         backgroundColor = Colors.transparent;
-        foregroundColor = AppColors.primaryAccent;
+        foregroundColor = AppColors.softRose;
         borderSide = const BorderSide(
-          color: AppColors.primaryAccent,
+          color: AppColors.softRose,
           width: 1.5,
         );
         break;
       case AppButtonVariant.danger:
         backgroundColor = AppColors.errorBackground;
-        foregroundColor = AppColors.error;
-        borderSide = const BorderSide(color: AppColors.error, width: 1);
+        foregroundColor = AppColors.errorAccent;
+        borderSide = const BorderSide(color: AppColors.errorAccent, width: 1);
         break;
       case AppButtonVariant.ghost:
         backgroundColor = Colors.transparent;
-        foregroundColor = AppColors.secondaryText;
+        foregroundColor = AppColors.secondaryTextCol;
         break;
     }
 
     final isInteractive = onPressed != null && !isLoading;
+    final borderRadius = BorderRadius.circular(24);
 
     return SizedBox(
       width: width ?? double.infinity,
       height: height,
-      child: Material(
-        color: isInteractive
-            ? backgroundColor
-            : backgroundColor.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: isInteractive ? onPressed : null,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: padding ?? const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: borderSide != null
-                  ? Border.fromBorderSide(borderSide)
-                  : null,
-            ),
-            child: Center(
-              child: isLoading
-                  ? SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          foregroundColor,
-                        ),
-                      ),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (leadingIcon != null) ...[
-                          Icon(leadingIcon, size: 20, color: foregroundColor),
-                          const SizedBox(width: 8),
-                        ],
-                        Flexible(
-                          child: Text(
-                            text,
-                            style: AppTypography.buttonText.copyWith(
-                              color: foregroundColor,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: gradient == null ? backgroundColor : null,
+          gradient: isInteractive ? gradient : null,
+          borderRadius: borderRadius,
+          border: borderSide != null ? Border.fromBorderSide(borderSide) : null,
+          boxShadow: isInteractive ? boxShadow : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isInteractive ? onPressed : null,
+            borderRadius: borderRadius,
+            splashColor: Colors.white.withValues(alpha: 0.2),
+            highlightColor: Colors.white.withValues(alpha: 0.1),
+            child: Padding(
+              padding: padding ?? const EdgeInsets.symmetric(horizontal: 20),
+              child: Center(
+                child: isLoading
+                    ? SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            foregroundColor,
                           ),
                         ),
-                        if (trailingIcon != null) ...[
-                          const SizedBox(width: 8),
-                          Icon(trailingIcon, size: 20, color: foregroundColor),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (leadingIcon != null) ...[
+                            Icon(leadingIcon, size: 20, color: foregroundColor),
+                            const SizedBox(width: 8),
+                          ],
+                          Flexible(
+                            child: Text(
+                              text,
+                              style: AppTypography.buttonText.copyWith(
+                                color: foregroundColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (trailingIcon != null) ...[
+                            const SizedBox(width: 8),
+                            Icon(trailingIcon, size: 20, color: foregroundColor),
+                          ],
                         ],
-                      ],
-                    ),
+                      ),
+              ),
             ),
           ),
         ),

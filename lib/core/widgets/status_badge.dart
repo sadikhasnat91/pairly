@@ -35,10 +35,10 @@ class StatusBadge extends StatelessWidget {
 
     switch (type) {
       case StatusBadgeType.live:
-        color = AppColors.success;
+        color = AppColors.successAccent;
         bgColor = AppColors.successBackground;
         label = customLabel ?? 'Live Location';
-        icon = Icons.fiber_manual_record;
+        icon = Icons.favorite;
         break;
       case StatusBadgeType.paused:
         color = AppColors.warning;
@@ -54,33 +54,33 @@ class StatusBadge extends StatelessWidget {
         break;
       case StatusBadgeType.offline:
         color = AppColors.tertiaryText;
-        bgColor = AppColors.cardSubtle;
+        bgColor = AppColors.softPinkSurface;
         label = customLabel ?? 'Offline';
         icon = Icons.cloud_off;
         break;
       case StatusBadgeType.permissionDenied:
-        color = AppColors.error;
+        color = AppColors.errorAccent;
         bgColor = AppColors.errorBackground;
         label = customLabel ?? 'Permission Denied';
         icon = Icons.location_disabled;
         break;
       case StatusBadgeType.gpsDisabled:
-        color = AppColors.error;
+        color = AppColors.errorAccent;
         bgColor = AppColors.errorBackground;
         label = customLabel ?? 'GPS Turned Off';
         icon = Icons.gps_off;
         break;
       case StatusBadgeType.disconnected:
-        color = AppColors.secondaryText;
-        bgColor = AppColors.cardSubtle;
+        color = AppColors.secondaryTextCol;
+        bgColor = AppColors.softPinkSurface;
         label = customLabel ?? 'Disconnected';
         icon = Icons.link_off;
         break;
       case StatusBadgeType.pending:
-        color = AppColors.info;
-        bgColor = AppColors.infoBackground;
+        color = AppColors.softRose;
+        bgColor = AppColors.softPinkSurface;
         label = customLabel ?? 'Pending Invite';
-        icon = Icons.hourglass_top;
+        icon = Icons.favorite_border;
         break;
     }
 
@@ -89,23 +89,31 @@ class StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (showDot) ...[
             if (type == StatusBadgeType.live)
-              _PulsingDot(color: color)
+              _PulsingHeart(color: color)
             else
-              Icon(icon, size: 12, color: color),
-            const SizedBox(width: 6),
+              Container(
+                width: 6,
+                height: 6,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+          ] else ...[
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 5),
           ],
           Text(
             label,
             style: AppTypography.labelSmall.copyWith(
               color: color,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
             ),
           ),
         ],
@@ -114,60 +122,59 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
-class _PulsingDot extends StatefulWidget {
+class _PulsingHeart extends StatefulWidget {
   final Color color;
 
-  const _PulsingDot({required this.color});
+  const _PulsingHeart({required this.color});
 
   @override
-  State<_PulsingDot> createState() => _PulsingDotState();
+  State<_PulsingHeart> createState() => _PulsingHeartState();
 }
 
-class _PulsingDotState extends State<_PulsingDot>
+class _PulsingHeartState extends State<_PulsingHeart>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late AnimationController _animController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
-    _animation = Tween<double>(
-      begin: 0.4,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.25).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: widget.color.withValues(alpha: _animation.value),
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withValues(alpha: _animation.value * 0.7),
-                blurRadius: 4,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-        );
-      },
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        width: 7,
+        height: 7,
+        margin: const EdgeInsets.only(right: 6),
+        decoration: BoxDecoration(
+          color: widget.color,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: widget.color.withValues(alpha: 0.6),
+              blurRadius: 4,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

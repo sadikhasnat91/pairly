@@ -13,7 +13,7 @@ class WelcomeView extends GetView<WelcomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: AppColors.warmCreamBackground,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -25,13 +25,20 @@ class WelcomeView extends GetView<WelcomeController> {
               Row(
                 children: [
                   Container(
-                    width: 42,
-                    height: 42,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryRomanticBlush.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       child: Image.asset(
                         'assets/images/logo.png',
                         fit: BoxFit.cover,
@@ -42,50 +49,54 @@ class WelcomeView extends GetView<WelcomeController> {
                   Text(
                     AppConstants.appName,
                     style: AppTypography.titleLarge.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.mainText,
                     ),
                   ),
                 ],
               ),
               const Spacer(),
-              // Hero Headline
+              // Romantic Hero Headline
               Text(
                 'Connected by heart.\nSynced by location.',
-                style: AppTypography.displayLarge.copyWith(height: 1.15),
+                style: AppTypography.displayLarge.copyWith(
+                  height: 1.18,
+                  color: AppColors.mainText,
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Text(
-                'Pairly gives couples peace of mind through mutual, consent-first location sharing. Always transparent, always in your control.',
+                'Pairly gives couples peace of mind through mutual, consent-first location sharing. Always intimate, always in your control.',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.secondaryText,
+                  color: AppColors.secondaryTextCol,
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 36),
-              // Value Props
+              const SizedBox(height: 32),
+              // Romantic Value Props
               _buildFeatureRow(
-                icon: Icons.lock_outline,
-                title: 'Private & Secure 1:1 Pairing',
-                desc: 'Only you and your partner can ever see each other.',
+                icon: Icons.favorite_border_rounded,
+                title: 'Private 1:1 Couple Space',
+                desc: 'Only you and your significant other can ever see each other.',
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
               _buildFeatureRow(
-                icon: Icons.near_me_outlined,
-                title: 'Live Map & Real-time Distance',
-                desc: 'Know when they reach home or work safely.',
+                icon: Icons.near_me_rounded,
+                title: 'Live Map & Real-time Closeness',
+                desc: 'Know when your partner is on their way or safe at home.',
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
               _buildFeatureRow(
-                icon: Icons.power_settings_new,
-                title: 'Instant Pause at Any Time',
-                desc: 'Tracking is never secret. Turn sharing off whenever you need.',
+                icon: Icons.shield_outlined,
+                title: 'Full Mutual Transparency',
+                desc: 'No secret tracking. Pause or resume sharing anytime in one tap.',
               ),
               const Spacer(),
               // CTA Buttons
               AppButton(
-                text: 'Create Account',
+                text: 'Create Couple Account',
                 variant: AppButtonVariant.primary,
-                trailingIcon: Icons.arrow_forward,
+                trailingIcon: Icons.arrow_forward_rounded,
                 onPressed: controller.onGetStarted,
               ),
               const SizedBox(height: 12),
@@ -111,14 +122,15 @@ class WelcomeView extends GetView<WelcomeController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 38,
-          height: 38,
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.elevatedCard,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.border),
+            color: AppColors.softPinkSurface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: AppColors.primaryRomanticBlush.withValues(alpha: 0.35),
+            ),
           ),
-          child: Icon(icon, color: AppColors.primaryAccent, size: 18),
+          child: Icon(icon, size: 20, color: AppColors.softRose),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -128,11 +140,18 @@ class WelcomeView extends GetView<WelcomeController> {
               Text(
                 title,
                 style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.primaryText,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.mainText,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(desc, style: AppTypography.bodySmall),
+              const SizedBox(height: 3),
+              Text(
+                desc,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.secondaryTextCol,
+                  height: 1.35,
+                ),
+              ),
             ],
           ),
         ),

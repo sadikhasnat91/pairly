@@ -21,5 +21,7 @@ abstract class AppRoutes {
   static const profile = '/profile';
   static const editProfile = '/edit-profile';
   static const safeArrival = '/safe-arrival';
+  static const cameraSettings = '/camera-settings';
+  static const videoCall = '/video-call';
 }
 

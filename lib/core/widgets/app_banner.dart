@@ -33,7 +33,7 @@ class AppBanner extends StatelessWidget {
         bg = AppColors.infoBackground;
         border = AppColors.info.withValues(alpha: 0.3);
         textColor = AppColors.info;
-        defaultIcon = Icons.info_outline;
+        defaultIcon = Icons.info_outline_rounded;
         break;
       case BannerVariant.warning:
         bg = AppColors.warningBackground;
@@ -43,15 +43,15 @@ class AppBanner extends StatelessWidget {
         break;
       case BannerVariant.error:
         bg = AppColors.errorBackground;
-        border = AppColors.error.withValues(alpha: 0.3);
-        textColor = AppColors.error;
-        defaultIcon = Icons.error_outline;
+        border = AppColors.errorAccent.withValues(alpha: 0.3);
+        textColor = AppColors.errorAccent;
+        defaultIcon = Icons.error_outline_rounded;
         break;
       case BannerVariant.success:
         bg = AppColors.successBackground;
-        border = AppColors.success.withValues(alpha: 0.3);
-        textColor = AppColors.success;
-        defaultIcon = Icons.check_circle_outline;
+        border = AppColors.successAccent.withValues(alpha: 0.3);
+        textColor = AppColors.successAccent;
+        defaultIcon = Icons.check_circle_outline_rounded;
         break;
     }
 
@@ -70,7 +70,7 @@ class AppBanner extends StatelessWidget {
             child: Text(
               message,
               style: AppTypography.bodySmall.copyWith(
-                color: AppColors.primaryText,
+                color: AppColors.mainText,
                 height: 1.35,
               ),
             ),
@@ -81,18 +81,18 @@ class AppBanner extends StatelessWidget {
               onTap: onAction,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
+                  horizontal: 12,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: textColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  color: textColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   actionLabel!,
                   style: AppTypography.labelSmall.copyWith(
                     color: textColor,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),

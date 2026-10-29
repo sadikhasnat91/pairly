@@ -32,23 +32,27 @@ class ConnectionStatusCard extends StatelessWidget {
     if (!isConnected) {
       return AppCard(
         onTap: onInvitePartner,
-        backgroundColor: AppColors.elevatedCard,
-        padding: const EdgeInsets.all(20),
+        backgroundColor: AppColors.whiteCards,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         child: Row(
           children: [
             Container(
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: AppColors.primaryAccent.withValues(alpha: 0.12),
+                gradient: AppColors.blushGradient,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primaryAccent.withValues(alpha: 0.3),
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryRomanticBlush.withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: const Icon(
-                Icons.favorite_outline,
-                color: AppColors.primaryAccent,
+                Icons.favorite_rounded,
+                color: Colors.white,
                 size: 26,
               ),
             ),
@@ -58,21 +62,35 @@ class ConnectionStatusCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'No Partner Connected',
+                    'Connect with Your Partner',
                     style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.primaryText,
+                      color: AppColors.mainText,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
-                    'Invite your significant other with a private pairing code',
-                    style: AppTypography.bodySmall,
+                    'Share your invite code to stay close wherever you are',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.secondaryTextCol,
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, color: AppColors.primaryAccent),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.softPinkSurface,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: AppColors.softRose,
+              ),
+            ),
           ],
         ),
       );
@@ -80,58 +98,58 @@ class ConnectionStatusCard extends StatelessWidget {
 
     return AppCard(
       onTap: onManagePartner,
-      backgroundColor: AppColors.elevatedCard,
-      padding: const EdgeInsets.all(20),
-      child: Column(
+      backgroundColor: AppColors.whiteCards,
+      padding: const EdgeInsets.all(18),
+      child: Row(
         children: [
-          Row(
-            children: [
-              PartnerAvatar(
-                name: partnerName,
-                photoUrl: partnerPhotoUrl,
-                size: 54,
-                isLive: isPartnerSharing,
-                isSharing: isPartnerSharing,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          PartnerAvatar(
+            name: partnerName,
+            photoUrl: partnerPhotoUrl,
+            size: 56,
+            isLive: isPartnerSharing,
+            isSharing: isPartnerSharing,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            partnerName ?? 'Partner',
-                            style: AppTypography.titleMedium,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Flexible(
+                      child: Text(
+                        partnerName ?? 'Partner',
+                        style: AppTypography.titleMedium.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.favorite,
-                          size: 16,
-                          color: AppColors.primaryAccent,
-                        ),
-                      ],
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      connectedAt != null
-                          ? 'Connected since ${DateFormatter.formatShortDate(connectedAt)}'
-                          : 'Connected Partner',
-                      style: AppTypography.bodySmall,
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.favorite,
+                      size: 15,
+                      color: AppColors.softRose,
                     ),
                   ],
                 ),
-              ),
-              StatusBadge(
-                type: isPartnerSharing
-                    ? StatusBadgeType.live
-                    : StatusBadgeType.paused,
-                customLabel: isPartnerSharing ? 'Sharing' : 'Paused',
-              ),
-            ],
+                const SizedBox(height: 3),
+                Text(
+                  connectedAt != null
+                      ? 'Connected since ${DateFormatter.formatShortDate(connectedAt)}'
+                      : 'Connected in heart',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.secondaryTextCol,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          StatusBadge(
+            type: isPartnerSharing
+                ? StatusBadgeType.live
+                : StatusBadgeType.paused,
+            customLabel: isPartnerSharing ? 'Sharing' : 'Paused',
           ),
         ],
       ),
