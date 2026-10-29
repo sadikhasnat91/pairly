@@ -10,8 +10,8 @@ import '../../../core/widgets/connection_status_card.dart';
 import '../../../core/widgets/location_sharing_card.dart';
 import '../../../core/widgets/partner_avatar.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../../app/routes/app_routes.dart';
 import '../../video_call/controllers/video_call_controller.dart';
-import '../../video_call/views/video_call_view.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -292,7 +292,7 @@ class HomeView extends GetView<HomeController> {
                     final partner = controller.partnerUser.value;
                     if (conn != null && partner != null) {
                       final videoCtrl = Get.find<VideoCallController>();
-                      Get.to(() => const VideoCallView());
+                      Get.toNamed(AppRoutes.videoCall);
                       videoCtrl.initiateCall(
                         partnerId: partner.id,
                         connectionId: conn.id,

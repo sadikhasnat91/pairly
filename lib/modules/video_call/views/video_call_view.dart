@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../data/models/video_call_model.dart';
 import '../controllers/video_call_controller.dart';
 
 class VideoCallView extends GetView<VideoCallController> {
@@ -11,43 +12,52 @@ class VideoCallView extends GetView<VideoCallController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // 1. Remote Partner Video (Fullscreen)
-            Positioned.fill(
-              child: Obx(() {
-                if (controller.isConnected.value && controller.isRemoteReady.value) {
-                  return RTCVideoView(
-                    controller.remoteRenderer,
-                    objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                  );
-                }
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          controller.endCall();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              // 1. Remote Partner Video (Fullscreen)
+              Positioned.fill(
+                child: Obx(() {
+                  if (controller.isRemoteReady.value) {
+                    return RTCVideoView(
+                      controller.remoteRenderer,
+                      objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                    );
+                  }
 
-                return Container(
-                  color: AppColors.deepRomanticPlum,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const CircularProgressIndicator(color: AppColors.softRose),
-                        const SizedBox(height: 20),
-                        Text(
-                          controller.isCaller.value
-                              ? 'Waiting for ${controller.partnerName.value} to accept...'
-                              : 'Connecting video...',
-                          style: AppTypography.titleMedium.copyWith(
-                            color: Colors.white,
+                  return Container(
+                    color: AppColors.deepRomanticPlum,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(color: AppColors.softRose),
+                          const SizedBox(height: 20),
+                          Text(
+                            controller.callStatus.value == VideoCallStatus.accepted
+                                ? 'Connecting video with ${controller.partnerName.value}...'
+                                : (controller.isCaller.value
+                                    ? 'Waiting for ${controller.partnerName.value} to accept...'
+                                    : 'Connecting video...'),
+                            style: AppTypography.titleMedium.copyWith(
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }),
-            ),
+                  );
+                }),
+              ),
 
             // 2. Top Privacy & Status Header
             Positioned(
@@ -216,7 +226,8 @@ class VideoCallView extends GetView<VideoCallController> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

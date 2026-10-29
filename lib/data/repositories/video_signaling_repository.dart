@@ -85,17 +85,16 @@ class VideoSignalingRepository {
     }
   }
 
-  /// Exchange ICE Candidate
-  Future<bool> addIceCandidate({
+  /// Exchange a batch of ICE Candidates to prevent race conditions and DB write collisions
+  Future<bool> addIceCandidatesBatch({
     required String sessionId,
-    required Map<String, dynamic> candidate,
+    required List<Map<String, dynamic>> newCandidates,
     required bool isCaller,
   }) async {
     final client = _client;
-    if (client == null) return false;
+    if (client == null || newCandidates.isEmpty) return false;
 
     try {
-      // Fetch current candidates list and append
       final sessionRes = await client
           .from('video_call_sessions')
           .select()
@@ -106,18 +105,47 @@ class VideoSignalingRepository {
 
       final column = isCaller ? 'caller_candidates' : 'receiver_candidates';
       final currentList = List<dynamic>.from(sessionRes[column] ?? []);
-      currentList.add(candidate);
 
-      await client.from('video_call_sessions').update({
-        column: currentList,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', sessionId);
+      final existingCandidateStrs = currentList
+          .map((c) => (c is Map) ? c['candidate']?.toString() : null)
+          .whereType<String>()
+          .toSet();
+
+      var hasNew = false;
+      for (final c in newCandidates) {
+        final cStr = c['candidate']?.toString();
+        if (cStr != null && !existingCandidateStrs.contains(cStr)) {
+          currentList.add(c);
+          existingCandidateStrs.add(cStr);
+          hasNew = true;
+        }
+      }
+
+      if (hasNew) {
+        await client.from('video_call_sessions').update({
+          column: currentList,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', sessionId);
+      }
 
       return true;
     } catch (e) {
-      debugPrint('[VideoSignalingRepository] addIceCandidate error: $e');
+      debugPrint('[VideoSignalingRepository] addIceCandidatesBatch error: $e');
       return false;
     }
+  }
+
+  /// Exchange single ICE Candidate
+  Future<bool> addIceCandidate({
+    required String sessionId,
+    required Map<String, dynamic> candidate,
+    required bool isCaller,
+  }) async {
+    return addIceCandidatesBatch(
+      sessionId: sessionId,
+      newCandidates: [candidate],
+      isCaller: isCaller,
+    );
   }
 
   /// Direct fetch fallback for any active incoming call for receiver

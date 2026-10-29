@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:get/get.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../data/models/video_call_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/location_repository.dart';
@@ -121,7 +122,8 @@ class MainLayoutController extends GetxController {
       );
 
       // 2. Present full-screen Incoming Call View
-      if (Get.currentRoute != '/incoming-call') {
+      if (Get.currentRoute != '/incoming-call' &&
+          Get.currentRoute != AppRoutes.videoCall) {
         Get.to(
           () => IncomingCallView(
             session: session,

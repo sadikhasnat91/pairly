@@ -22,19 +22,22 @@ class VideoCallService {
       {'urls': 'stun:stun.l.google.com:19302'},
       {'urls': 'stun:stun1.l.google.com:19302'},
       {'urls': 'stun:stun2.l.google.com:19302'},
-      {'urls': 'stun:openrelay.metered.ca:80'},
+      {'urls': 'stun:stun3.l.google.com:19302'},
+      {'urls': 'stun:stun4.l.google.com:19302'},
+      {'urls': 'stun:stun.relay.metered.ca:80'},
+      {'urls': 'stun:stun.cloudflare.com:3478'},
       {
-        'urls': 'turn:openrelay.metered.ca:80',
+        'urls': 'turn:standard.relay.metered.ca:80',
         'username': 'openrelayproject',
         'credential': 'openrelayproject',
       },
       {
-        'urls': 'turn:openrelay.metered.ca:443',
+        'urls': 'turn:standard.relay.metered.ca:443',
         'username': 'openrelayproject',
         'credential': 'openrelayproject',
       },
       {
-        'urls': 'turn:openrelay.metered.ca:443?transport=tcp',
+        'urls': 'turn:standard.relay.metered.ca:443?transport=tcp',
         'username': 'openrelayproject',
         'credential': 'openrelayproject',
       },
@@ -107,6 +110,7 @@ class VideoCallService {
   Future<RTCPeerConnection?> createConnection({
     required Function(RTCIceCandidate candidate) onIceCandidate,
     required Function(MediaStream stream) onRemoteStream,
+    Function(RTCPeerConnectionState state)? onConnectionStateChange,
   }) async {
     try {
       await initRenderers();
@@ -124,7 +128,7 @@ class VideoCallService {
       };
 
       peerConnection!.onTrack = (RTCTrackEvent event) {
-        debugPrint('[VideoCallService] onTrack received: ${event.streams.length} streams');
+        debugPrint('[VideoCallService] onTrack received: ${event.streams.length} streams, track=${event.track.kind}');
         if (event.streams.isNotEmpty) {
           remoteStream = event.streams[0];
           remoteRenderer.srcObject = remoteStream;
@@ -137,6 +141,15 @@ class VideoCallService {
         remoteStream = stream;
         remoteRenderer.srcObject = remoteStream;
         onRemoteStream(stream);
+      };
+
+      peerConnection!.onConnectionState = (RTCPeerConnectionState state) {
+        debugPrint('[VideoCallService] PeerConnectionState: $state');
+        onConnectionStateChange?.call(state);
+      };
+
+      peerConnection!.onIceConnectionState = (RTCIceConnectionState state) {
+        debugPrint('[VideoCallService] IceConnectionState: $state');
       };
 
       return peerConnection;
@@ -185,16 +198,18 @@ class VideoCallService {
   }
 
   /// Set remote answer on caller side
-  Future<void> setRemoteAnswer(Map<String, dynamic> answer) async {
-    if (peerConnection == null) return;
+  Future<bool> setRemoteAnswer(Map<String, dynamic> answer) async {
+    if (peerConnection == null) return false;
     try {
       final desc = RTCSessionDescription(
         answer['sdp'] as String?,
         answer['type'] as String?,
       );
       await peerConnection!.setRemoteDescription(desc);
+      return true;
     } catch (e) {
       debugPrint('[VideoCallService] setRemoteAnswer error: $e');
+      return false;
     }
   }
 

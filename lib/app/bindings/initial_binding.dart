@@ -97,9 +97,9 @@ class InitialBinding extends Bindings {
       () => SafeArrivalController(),
       fenix: true,
     );
-    Get.lazyPut<VideoCallController>(
-      () => VideoCallController(),
-      fenix: true,
+    Get.put<VideoCallController>(
+      VideoCallController(),
+      permanent: true,
     );
   }
 }

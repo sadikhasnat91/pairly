@@ -6,8 +6,8 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/partner_avatar.dart';
 import '../../../data/models/video_call_model.dart';
+import '../../../app/routes/app_routes.dart';
 import '../controllers/video_call_controller.dart';
-import 'video_call_view.dart';
 
 class IncomingCallView extends StatelessWidget {
   final VideoCallSessionModel session;
@@ -23,7 +23,7 @@ class IncomingCallView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(VideoCallController());
+    final controller = Get.find<VideoCallController>();
 
     return Scaffold(
       backgroundColor: AppColors.deepRomanticPlum,
@@ -155,9 +155,12 @@ class IncomingCallView extends StatelessWidget {
                           text: 'Accept',
                           variant: AppButtonVariant.primary,
                           leadingIcon: Icons.videocam_rounded,
-                          onPressed: () async {
-                            await controller.acceptCall(session);
-                            Get.off(() => const VideoCallView());
+                          onPressed: () {
+                            Get.offNamed(AppRoutes.videoCall);
+                            controller.acceptCall(
+                              session,
+                              callerDisplayName: callerName,
+                            );
                           },
                         ),
                       ),
