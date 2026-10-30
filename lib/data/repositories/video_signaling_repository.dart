@@ -11,12 +11,13 @@ class VideoSignalingRepository {
 
   SupabaseClient? get _client => supabaseService.client;
 
-  /// Initiate a new video call session request with an initial SDP Offer
+  /// Initiate a new video call session request with an initial SDP Offer and gathered candidates
   Future<VideoCallSessionModel?> createCallSession({
     required String connectionId,
     required String callerId,
     required String receiverId,
     required Map<String, dynamic> sdpOffer,
+    List<Map<String, dynamic>>? initialCallerCandidates,
   }) async {
     final client = _client;
     if (client == null) return null;
@@ -30,7 +31,7 @@ class VideoSignalingRepository {
             'receiver_id': receiverId,
             'status': 'ringing',
             'sdp_offer': sdpOffer,
-            'caller_candidates': [],
+            'caller_candidates': initialCallerCandidates ?? [],
             'receiver_candidates': [],
             'updated_at': DateTime.now().toIso8601String(),
           })
@@ -64,20 +65,29 @@ class VideoSignalingRepository {
     }
   }
 
-  /// Receiver sends SDP Answer upon explicit user acceptance
+  /// Receiver sends SDP Answer and initial candidates upon explicit user acceptance
   Future<bool> sendAnswer({
     required String sessionId,
     required Map<String, dynamic> sdpAnswer,
+    List<Map<String, dynamic>>? initialReceiverCandidates,
   }) async {
     final client = _client;
     if (client == null) return false;
 
     try {
-      await client.from('video_call_sessions').update({
+      final updateData = <String, dynamic>{
         'status': 'accepted',
         'sdp_answer': sdpAnswer,
         'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', sessionId);
+      };
+      if (initialReceiverCandidates != null && initialReceiverCandidates.isNotEmpty) {
+        updateData['receiver_candidates'] = initialReceiverCandidates;
+      }
+
+      await client
+          .from('video_call_sessions')
+          .update(updateData)
+          .eq('id', sessionId);
       return true;
     } catch (e) {
       debugPrint('[VideoSignalingRepository] sendAnswer error: $e');

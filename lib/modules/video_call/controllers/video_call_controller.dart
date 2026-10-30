@@ -84,25 +84,25 @@ class VideoCallController extends GetxController {
     // 2. Create WebRTC PeerConnection
     await videoService.createConnection(
       onIceCandidate: (candidate) {
+        final candMap = {
+          'candidate': candidate.candidate,
+          'sdpMid': candidate.sdpMid,
+          'sdpMLineIndex': candidate.sdpMLineIndex,
+        };
         final sid = activeSession.value?.id;
         if (sid != null) {
-          _queueIceCandidate(
-            {
-              'candidate': candidate.candidate,
-              'sdpMid': candidate.sdpMid,
-              'sdpMLineIndex': candidate.sdpMLineIndex,
-            },
-            sid,
-            true,
-          );
+          _queueIceCandidate(candMap, sid, true);
+        } else {
+          _pendingLocalCandidates.add(candMap);
         }
       },
       onRemoteStream: (stream) {
-        debugPrint('[VideoCallController] Remote stream arrived!');
+        debugPrint('[VideoCallController] Remote stream arrived on caller!');
         isRemoteReady.value = true;
         isConnected.value = true;
       },
       onConnectionStateChange: (state) {
+        debugPrint('[VideoCallController] Caller connection state: $state');
         if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
           isConnected.value = true;
         }
@@ -113,15 +113,23 @@ class VideoCallController extends GetxController {
     final offerDesc = await videoService.createOffer();
     if (offerDesc == null) return;
 
+    // Allow 400ms for initial host and STUN candidates to gather
+    await Future.delayed(const Duration(milliseconds: 400));
+
     final currentUser = _authRepo.currentUser;
     if (currentUser == null) return;
 
-    // 4. Save call session in Supabase to ring partner's device
+    final initialCandidates =
+        List<Map<String, dynamic>>.from(_pendingLocalCandidates);
+    _pendingLocalCandidates.clear();
+
+    // 4. Save call session in Supabase with initial offer & candidates
     final session = await _signalingRepo.createCallSession(
       connectionId: connectionId,
       callerId: currentUser.id,
       receiverId: partnerId,
       sdpOffer: {'sdp': offerDesc.sdp, 'type': offerDesc.type},
+      initialCallerCandidates: initialCandidates,
     );
 
     if (session == null) {
@@ -131,12 +139,12 @@ class VideoCallController extends GetxController {
     }
 
     activeSession.value = session;
-    _flushIceCandidates(session.id, true);
     _listenToSessionUpdates(session.id);
   }
 
   /// Receiver explicitly accepts the incoming live video request (Consent Given)
-  Future<void> acceptCall(VideoCallSessionModel session, {String? callerDisplayName}) async {
+  Future<void> acceptCall(VideoCallSessionModel session,
+      {String? callerDisplayName}) async {
     _notificationService.cancelIncomingCallNotification();
     isCaller.value = false;
     if (callerDisplayName != null && callerDisplayName.isNotEmpty) {
@@ -169,15 +177,17 @@ class VideoCallController extends GetxController {
     // 2. Create PeerConnection
     await videoService.createConnection(
       onIceCandidate: (candidate) {
-        _queueIceCandidate(
-          {
-            'candidate': candidate.candidate,
-            'sdpMid': candidate.sdpMid,
-            'sdpMLineIndex': candidate.sdpMLineIndex,
-          },
-          session.id,
-          false,
-        );
+        final candMap = {
+          'candidate': candidate.candidate,
+          'sdpMid': candidate.sdpMid,
+          'sdpMLineIndex': candidate.sdpMLineIndex,
+        };
+        final sid = activeSession.value?.id;
+        if (sid != null && _isRemoteDescriptionSet) {
+          _queueIceCandidate(candMap, sid, false);
+        } else {
+          _pendingLocalCandidates.add(candMap);
+        }
       },
       onRemoteStream: (stream) {
         debugPrint('[VideoCallController] Remote stream arrived on receiver!');
@@ -185,33 +195,41 @@ class VideoCallController extends GetxController {
         isConnected.value = true;
       },
       onConnectionStateChange: (state) {
+        debugPrint('[VideoCallController] Receiver connection state: $state');
         if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
           isConnected.value = true;
         }
       },
     );
 
-    // 3. Set remote offer & send SDP Answer
+    // 3. Set remote offer & send SDP Answer along with gathered receiver candidates
     if (session.sdpOffer != null) {
       final answerDesc = await videoService.createAnswer(session.sdpOffer!);
       if (answerDesc != null) {
         _isRemoteDescriptionSet = true;
+        // Allow 400ms for receiver's host and STUN candidates to gather
+        await Future.delayed(const Duration(milliseconds: 400));
         await _drainPendingRemoteCandidates();
+
+        final initialReceiverCands =
+            List<Map<String, dynamic>>.from(_pendingLocalCandidates);
+        _pendingLocalCandidates.clear();
+
         await _signalingRepo.sendAnswer(
           sessionId: session.id,
           sdpAnswer: {'sdp': answerDesc.sdp, 'type': answerDesc.type},
+          initialReceiverCandidates: initialReceiverCands,
         );
       }
     }
 
-    // 4. Add existing caller candidates
+    // 4. Add caller's candidates (which are already in session.callerCandidates!)
     for (final c in session.callerCandidates) {
       if (c is Map<String, dynamic>) {
         await _processRemoteCandidate(c);
       }
     }
 
-    _flushIceCandidates(session.id, false);
     _listenToSessionUpdates(session.id);
     _startDurationTimer();
   }
@@ -234,7 +252,7 @@ class VideoCallController extends GetxController {
   ) {
     _pendingLocalCandidates.add(candidate);
     _candidateBatchTimer?.cancel();
-    _candidateBatchTimer = Timer(const Duration(milliseconds: 180), () {
+    _candidateBatchTimer = Timer(const Duration(milliseconds: 250), () {
       _flushIceCandidates(sessionId, isCallerRole);
     });
     if (_pendingLocalCandidates.length >= 4) {
@@ -254,7 +272,8 @@ class VideoCallController extends GetxController {
   }
 
   Future<void> _processRemoteCandidate(Map<String, dynamic> cand) async {
-    final candKey = '${cand['candidate']}_${cand['sdpMid']}_${cand['sdpMLineIndex']}';
+    final candKey =
+        '${cand['candidate']}_${cand['sdpMid']}_${cand['sdpMLineIndex']}';
     if (_processedCandidates.contains(candKey)) return;
     _processedCandidates.add(candKey);
 
@@ -321,7 +340,8 @@ class VideoCallController extends GetxController {
         updated.status == VideoCallStatus.accepted &&
         updated.sdpAnswer != null &&
         !_isRemoteDescriptionSet) {
-      debugPrint('[VideoCallController] Received SDP Answer! Connecting WebRTC...');
+      debugPrint(
+          '[VideoCallController] Received SDP Answer! Connecting WebRTC...');
       final ok = await videoService.setRemoteAnswer(updated.sdpAnswer!);
       if (ok) {
         _isRemoteDescriptionSet = true;

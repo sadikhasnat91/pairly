@@ -26,6 +26,9 @@ class VideoCallService {
       {'urls': 'stun:stun4.l.google.com:19302'},
       {'urls': 'stun:stun.relay.metered.ca:80'},
       {'urls': 'stun:stun.cloudflare.com:3478'},
+      {'urls': 'stun:stun.services.mozilla.com'},
+      {'urls': 'stun:stun.ekiga.net'},
+      {'urls': 'stun:stun.1und1.de:3478'},
       {
         'urls': 'turn:standard.relay.metered.ca:80',
         'username': 'openrelayproject',
